@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>麦当劳点单台</title>
+<style>
+  :root { --red:#c8102e; --dark-red:#8f0b20; --gold:#ffbc0d; --cream:#fff3d6; --paper:#fbe9bf; --ink:#3a2210; }
+  * { box-sizing: border-box; }
+  body { margin:0; height:100vh; font-family:"PingFang SC","Microsoft YaHei",sans-serif; color:var(--ink);
+         background:#2a1a10; display:grid; grid-template-columns: 1fr 440px; }
+  button { font:inherit; cursor:pointer; }
+  button:focus-visible, input:focus-visible { outline:3px solid #1a73e8; outline-offset:2px; }
+
+  /* 左侧: 店员 + 对话 */
+  .scene { display:flex; flex-direction:column; min-width:0; background:
+      repeating-linear-gradient(45deg,#f1d9a6 0 24px,#ecd09a 24px 48px); border-right:6px solid var(--dark-red); }
+  .banner { background:var(--red); color:var(--gold); padding:10px 18px; font-weight:800; font-size:20px;
+            letter-spacing:2px; border-bottom:4px solid var(--dark-red); display:flex; justify-content:space-between; align-items:center; }
+  .banner small { color:#fff; font-weight:500; font-size:13px; letter-spacing:0; }
+  .clerk { display:flex; align-items:center; gap:14px; padding:14px 18px 6px; }
+  .clerk .avatar { font-size:56px; line-height:1; image-rendering:pixelated; }
+  .chat { flex:1; overflow-y:auto; padding:8px 18px 12px; display:flex; flex-direction:column; gap:10px; }
+  .msg { max-width:82%; padding:10px 14px; border:3px solid var(--ink); border-radius:10px; background:#fff; line-height:1.55; white-space:pre-wrap; box-shadow:3px 3px 0 rgba(0,0,0,.25); }
+  .msg.bot { align-self:flex-start; background:var(--cream); }
+  .msg.user { align-self:flex-end; background:var(--gold); }
+  .msg.sys { align-self:center; font-size:13px; background:transparent; border:none; box-shadow:none; color:#6b4a2b; }
+  .composer { display:flex; gap:8px; padding:12px 18px; background:var(--dark-red); }
+  .composer input { flex:1; padding:12px; border:3px solid var(--ink); border-radius:8px; font:inherit; background:#fff; }
+  .btn { background:var(--gold); border:3px solid var(--ink); border-radius:8px; padding:10px 18px; font-weight:800; box-shadow:0 4px 0 var(--ink); }
+  .btn:active { transform:translateY(3px); box-shadow:0 1px 0 var(--ink); }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; padding:0 18px 10px; }
+  .chip { background:#fff; border:2px solid var(--ink); border-radius:999px; padding:5px 12px; font-size:14px; }
+
+  /* 右侧: 菜单面板 */
+  .panel { display:flex; flex-direction:column; background:var(--paper); min-height:0; }
+  .panel header { background:var(--red); color:var(--gold); text-align:center; font-size:34px; font-weight:900; padding:6px 0; border-bottom:5px solid var(--dark-red); }
+  .store-bar { padding:8px 12px; font-size:13px; background:#f3d79b; border-bottom:2px solid #d9b46a; display:flex; justify-content:space-between; gap:8px; }
+  .body { flex:1; display:grid; grid-template-columns:78px 1fr; min-height:0; }
+  .tabs { background:#f6dfa8; display:flex; flex-direction:column; border-right:3px solid #d9b46a; overflow-y:auto; }
+  .tab { border:none; background:transparent; padding:14px 4px; font-weight:700; color:var(--ink); border-left:5px solid transparent; }
+  .tab[aria-selected="true"] { background:var(--cream); border-left-color:var(--red); }
+  .grid { overflow-y:auto; padding:10px; display:grid; grid-template-columns:repeat(2,1fr); gap:10px; align-content:start; }
+  .card { background:var(--cream); border:3px solid #e1bd75; border-radius:10px; padding:8px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:4px; }
+  .card img { width:88px; height:88px; object-fit:contain; background:#fff8e6; border-radius:6px; }
+  .card .nm { font-size:13px; font-weight:700; min-height:36px; }
+  .card .pr { color:var(--red); font-weight:800; }
+  .card .pr s { color:#9a8466; font-weight:400; font-size:12px; margin-left:4px; }
+  .card .kc { font-size:11px; color:#6b4a2b; }
+  .qty { display:flex; align-items:center; gap:8px; }
+  .qty button { width:30px; height:30px; border-radius:50%; border:2px solid var(--ink); background:var(--gold); font-weight:900; }
+  .empty { grid-column:1/-1; text-align:center; color:#8a6a40; padding:30px 10px; }
+  .cartbar { border-top:5px solid var(--dark-red); background:var(--cream); padding:10px 12px; }
+  .cartbar ul { list-style:none; margin:0 0 8px; padding:0; max-height:110px; overflow-y:auto; font-size:14px; }
+  .cartbar li { display:flex; justify-content:space-between; gap:6px; padding:2px 0; }
+  .cartbar .row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .total { font-weight:900; font-size:20px; color:var(--red); }
+  .quote { font-size:13px; color:#6b4a2b; margin-bottom:6px; }
+  .modal { position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; padding:16px; }
+  .modal.open { display:flex; }
+  .dialog { background:var(--cream); border:4px solid var(--ink); border-radius:12px; padding:16px; width:min(520px,100%); max-height:85vh; overflow-y:auto; }
+  .dialog h2 { margin:0 0 10px; color:var(--red); }
+  .dialog input { padding:9px; border:3px solid var(--ink); border-radius:8px; font:inherit; width:100%; margin-bottom:8px; }
+  .store-item { width:100%; text-align:left; background:#fff; border:3px solid var(--ink); border-radius:8px; padding:10px; margin-top:8px; }
+  .store-item small { display:block; color:#6b4a2b; }
+  .trace { font-size:12px; color:#7b5a37; }
+  @media (max-width: 860px) { body { grid-template-columns:1fr; grid-template-rows:55vh 45vh; } }
+</style>
+</head>
+<body>
+<section class="scene" aria-label="店员对话">
+  <div class="banner"><span>麦当劳点单台</span><small id="storeName">未选门店</small></div>
+  <div class="clerk"><div class="avatar" aria-hidden="true">🧢</div>
+    <div><strong>小麦</strong><div class="trace" id="trace">我可以帮你推荐、搭配、算价</div></div></div>
+  <div class="chips" id="chips"></div>
+  <div class="chat" id="chat" role="log" aria-live="polite"></div>
+  <form class="composer" id="form">
+    <label for="input" hidden>对店员说</label>
+    <input id="input" autocomplete="off" placeholder="例如: 预算50块, 两个人吃, 来点推荐" maxlength="500">
+    <button class="btn" id="send">发送</button>
+  </form>
+</section>
+
+<section class="panel" aria-label="菜单">
+  <header>M</header>
+  <div class="store-bar"><span id="storeLine">请先选择门店</span><button class="chip" id="pickStore">选门店</button></div>
+  <div class="body">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="grid" id="grid"><div class="empty">选好门店后这里会显示菜单</div></div>
+  </div>
+  <div class="cartbar">
+    <ul id="cartList"></ul>
+    <div class="quote" id="quote"></div>
+    <div class="row"><span class="total" id="total">¥0</span>
+      <span><button class="chip" id="clearCart">清空</button>
+      <button class="btn" id="confirm" disabled>确认下单</button></span></div>
+  </div>
+</section>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="dialog">
+    <h2 id="mTitle">选择门店</h2>
+    <input id="city" placeholder="城市, 如 上海" value="上海" aria-label="城市">
+    <input id="kw" placeholder="地点, 如 人民广场" aria-label="地点关键词">
+    <button class="btn" id="doSearch">搜索</button> <button class="chip" id="closeModal">关闭</button>
+    <div id="storeList"></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let sid = null, state = null, menu = {}, groups = [], active = null, lastQuote = null;
+
+async function api(path, body) {
+  const r = await fetch(path, body ? {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)} : undefined);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.detail || r.statusText);
+  return j;
+}
+function say(text, cls) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + cls; d.textContent = text;
+  $('chat').appendChild(d); $('chat').scrollTop = 1e9;
+}
+function yuan(n) { return '¥' + (Math.round(n * 100) / 100); }
+
+function renderTabs() {
+  $('tabs').innerHTML = '';
+  groups.forEach(g => {
+    const b = document.createElement('button');
+    b.className = 'tab'; b.role = 'tab'; b.textContent = g;
+    b.setAttribute('aria-selected', g === active);
+    b.onclick = () => { active = g; renderTabs(); renderGrid(); };
+    $('tabs').appendChild(b);
+  });
+}
+function qtyOf(code) {
+  const l = state && state.cart.lines.find(x => x.code === code);
+  return l ? l.quantity : 0;
+}
+function renderGrid() {
+  const list = menu[active] || [];
+  $('grid').innerHTML = list.length ? '' : '<div class="empty">这个分类暂时没有餐品</div>';
+  list.forEach(m => {
+    const c = document.createElement('div'); c.className = 'card';
+    const img = document.createElement('img'); img.src = m.image; img.alt = m.name; img.loading = 'lazy';
+    const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = m.name;
+    const pr = document.createElement('div'); pr.className = 'pr'; pr.textContent = yuan(m.price);
+    if (m.originalPrice > m.price) { const s = document.createElement('s'); s.textContent = yuan(m.originalPrice); pr.appendChild(s); }
+    const q = document.createElement('div'); q.className = 'qty';
+    const minus = document.createElement('button'); minus.textContent = '−'; minus.setAttribute('aria-label', '减少 ' + m.name);
+    const n = document.createElement('span'); n.textContent = qtyOf(m.code);
+    const plus = document.createElement('button'); plus.textContent = '+'; plus.setAttribute('aria-label', '增加 ' + m.name);
+    minus.onclick = () => setQty(m.code, Math.max(0, qtyOf(m.code) - 1));
+    plus.onclick = () => setQty(m.code, qtyOf(m.code) + 1);
+    q.append(minus, n, plus);
+    c.append(img, nm, pr);
+    if (m.kcal) { const k = document.createElement('div'); k.className = 'kc'; k.textContent = m.kcal + ' 千卡'; c.appendChild(k); }
+    c.appendChild(q); $('grid').appendChild(c);
+  });
+}
+function renderCart() {
+  $('cartList').innerHTML = '';
+  state.cart.lines.forEach(l => {
+    const li = document.createElement('li');
+    li.innerHTML = '<span></span><span></span>';
+    li.children[0].textContent = l.name + ' × ' + l.quantity;
+    li.children[1].textContent = yuan(l.price * l.quantity);
+    $('cartList').appendChild(li);
+  });
+  $('total').textContent = yuan(state.cart.total);
+  const p = state.pending;
+  $('quote').textContent = p ? `算价结果: 应付 ${yuan(p.price)}` + (p.discount ? `(已优惠 ${yuan(p.discount)})` : '') : (state.cart.lines.length ? '让小麦帮你算价后可下单' : '');
+  $('confirm').disabled = !p;
+  $('storeLine').textContent = state.store ? '门店 ' + state.store.store_code : '请先选择门店';
+  $('storeName').textContent = state.store ? '门店 ' + state.store.store_code : '未选门店';
+}
+function setState(s) { state = s; renderCart(); if (active) renderGrid(); }
+
+async function loadMenu() {
+  const m = await api('/api/menu?session_id=' + sid);
+  menu = m.menu; groups = m.groups; active = active || groups[0];
+  renderTabs(); renderGrid();
+}
+async function setQty(code, quantity) {
+  try { setState((await api('/api/cart', {session_id:sid, code, quantity})).state); }
+  catch (e) { say(e.message, 'sys'); }
+}
+
+$('form').onsubmit = async e => {
+  e.preventDefault();
+  const text = $('input').value.trim(); if (!text) return;
+  $('input').value = ''; say(text, 'user'); $('send').disabled = true;
+  try {
+    const r = await api('/api/chat', {session_id:sid, message:text});
+    say(r.reply || '(没有回复)', 'bot');
+    $('trace').textContent = r.trace.length ? '刚才用了: ' + r.trace.map(t => t.tool).join(' → ') : '';
+    const hadStore = !!(state && state.store);
+    setState(r.state);
+    if (r.state.store && (!hadStore || r.trace.some(t => t.tool === 'select_store'))) await loadMenu();
+  } catch (err) { say('出错了: ' + err.message, 'sys'); }
+  $('send').disabled = false; $('input').focus();
+};
+
+$('pickStore').onclick = () => { $('modal').classList.add('open'); $('kw').focus(); };
+$('closeModal').onclick = () => $('modal').classList.remove('open');
+$('doSearch').onclick = async () => {
+  $('storeList').textContent = '搜索中…';
+  try {
+    const r = await api(`/api/stores?city=${encodeURIComponent($('city').value)}&keyword=${encodeURIComponent($('kw').value)}`);
+    $('storeList').innerHTML = '';
+    if (!r.stores) { $('storeList').textContent = r.error || '没有找到'; return; }
+    r.stores.forEach(s => {
+      const b = document.createElement('button'); b.className = 'store-item';
+      b.innerHTML = '<strong></strong><small></small>';
+      b.children[0].textContent = s.name;
+      b.children[1].textContent = `${s.address || ''} · ${s.distance ?? '?'}米 · ${s.open ? '营业中' : '未营业'}`;
+      b.onclick = async () => {
+        try {
+          setState((await api('/api/store', {session_id:sid, store_code:s.storeCode})).state);
+          $('storeName').textContent = s.name; $('storeLine').textContent = s.name;
+          $('modal').classList.remove('open'); await loadMenu();
+          say(`已选「${s.name}」, 想吃点什么?`, 'bot');
+        } catch (e) { $('storeList').textContent = e.message; }
+      };
+      $('storeList').appendChild(b);
+    });
+  } catch (e) { $('storeList').textContent = e.message; }
+};
+
+$('clearCart').onclick = async () => {
+  for (const l of [...state.cart.lines]) await setQty(l.code, 0);
+};
+$('confirm').onclick = async () => {
+  const ways = state.pending.takeWayList;
+  const pick = ways.length > 1 ? prompt('取餐方式: ' + ways.map((w, i) => `${i + 1}.${w.title}`).join('  '), '1') : '1';
+  const w = ways[parseInt(pick, 10) - 1]; if (!w) return;
+  if (!confirm(`确认下单 ${yuan(state.pending.price)} (${w.title})?`)) return;
+  try {
+    const r = await api('/api/order/confirm', {session_id:sid, take_way_code:w.code});
+    say('下单成功。' + (r.message || '') + ' 请按提示完成支付。', 'bot');
+    const o = r.order || {}; if (o.payH5Url) say('支付链接: ' + o.payH5Url, 'sys');
+    setState({...state, cart:{lines:[], total:0}, pending:null});
+  } catch (e) { say('下单失败: ' + e.message, 'sys'); }
+};
+
+['预算50块两个人吃', '推荐一个爆款套餐', '想吃点低热量的', '有什么甜品?'].forEach(t => {
+  const b = document.createElement('button'); b.className = 'chip'; b.textContent = t;
+  b.onclick = () => { $('input').value = t; $('form').requestSubmit(); };
+  $('chips').appendChild(b);
+});
+
+(async () => {
+  sid = (await api('/api/session', {})).session_id;
+  state = {store:null, cart:{lines:[], total:0}, pending:null}; renderCart();
+  say('欢迎光临, 我是小麦。先选个门店, 或者直接告诉我你在哪个城市、哪个位置。', 'bot');
+})();
+</script>
+</body>
+</html>
