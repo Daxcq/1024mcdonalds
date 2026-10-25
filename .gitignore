@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 .venv/
 *_raw.txt
+
+# Generated scene debugging images
+/tools/_debug/

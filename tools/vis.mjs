@@ -1,0 +1,14 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch();
+const p = await b.newPage({ viewport: { width: 1500, height: 1000 } });
+await p.goto('file:///sessions/quirky-zealous-heisenberg/mnt/maidanglaoxiangmu/index.html');
+await p.waitForTimeout(600);
+await p.evaluate(() => { MD.engine.speed = 0; });
+const adv = (ms) => p.evaluate(async (ms) => { const E = MD.engine; for (let t = 0; t < ms; t += 16) { E.update(16); await new Promise(r => setTimeout(r, 0)); } E.emit(); }, ms);
+const shot = async (name) => { await p.waitForTimeout(60); await (await p.$('#cv')).screenshot({ path: 'tools/_debug/' + name + '.png' }); };
+await p.evaluate(() => { MD.engine.add('cola'); MD.engine.add('burger'); MD.engine.add('fries_m'); });
+await adv(3800); await shot('lift1');
+await adv(2200); await shot('lift2');
+await adv(2000); await shot('lift3');
+await adv(4000); await shot('lift4');
+console.log('done'); await b.close();

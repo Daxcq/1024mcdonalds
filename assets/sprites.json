@@ -1,0 +1,346 @@
+{
+ "burger": {
+  "w": 167,
+  "h": 161
+ },
+ "cheeseburger": {
+  "w": 164,
+  "h": 156
+ },
+ "double_cheese": {
+  "w": 165,
+  "h": 173
+ },
+ "mcchicken": {
+  "w": 175,
+  "h": 159
+ },
+ "spicy_mcchicken": {
+  "w": 169,
+  "h": 161
+ },
+ "bigmac": {
+  "w": 172,
+  "h": 188
+ },
+ "spicy_leg": {
+  "w": 168,
+  "h": 147
+ },
+ "crispy_chicken": {
+  "w": 171,
+  "h": 154
+ },
+ "teriyaki": {
+  "w": 177,
+  "h": 154
+ },
+ "fries_s": {
+  "w": 128,
+  "h": 160
+ },
+ "fries_m": {
+  "w": 135,
+  "h": 186
+ },
+ "fries_l": {
+  "w": 147,
+  "h": 158
+ },
+ "nuggets5": {
+  "w": 162,
+  "h": 144
+ },
+ "nuggets10": {
+  "w": 178,
+  "h": 139
+ },
+ "fried_chicken": {
+  "w": 156,
+  "h": 133
+ },
+ "spicy_wings": {
+  "w": 155,
+  "h": 133
+ },
+ "wings2": {
+  "w": 166,
+  "h": 124
+ },
+ "apple_pie": {
+  "w": 218,
+  "h": 122
+ },
+ "mcflurry": {
+  "w": 127,
+  "h": 154
+ },
+ "cone": {
+  "w": 89,
+  "h": 160
+ },
+ "sundae": {
+  "w": 102,
+  "h": 157
+ },
+ "iced_coffee": {
+  "w": 107,
+  "h": 165
+ },
+ "hot_coffee": {
+  "w": 101,
+  "h": 133
+ },
+ "cola": {
+  "w": 107,
+  "h": 168
+ },
+ "orange": {
+  "w": 98,
+  "h": 167
+ },
+ "bun_top": {
+  "w": 107,
+  "h": 83
+ },
+ "bun_bottom": {
+  "w": 100,
+  "h": 63
+ },
+ "patty_beef": {
+  "w": 102,
+  "h": 74
+ },
+ "patty_chicken": {
+  "w": 102,
+  "h": 71
+ },
+ "cheese": {
+  "w": 109,
+  "h": 66
+ },
+ "lettuce": {
+  "w": 109,
+  "h": 78
+ },
+ "tomato": {
+  "w": 102,
+  "h": 70
+ },
+ "pickle": {
+  "w": 95,
+  "h": 56
+ },
+ "onion": {
+  "w": 91,
+  "h": 69
+ },
+ "sauce_ketchup": {
+  "w": 83,
+  "h": 73
+ },
+ "sauce_mustard": {
+  "w": 82,
+  "h": 74
+ },
+ "sauce_mayo": {
+  "w": 80,
+  "h": 75
+ },
+ "fries_pack": {
+  "w": 78,
+  "h": 93
+ },
+ "hashbrown": {
+  "w": 70,
+  "h": 72
+ },
+ "nugget": {
+  "w": 78,
+  "h": 69
+ },
+ "nuggets_pile5": {
+  "w": 94,
+  "h": 67
+ },
+ "nuggets_pile10": {
+  "w": 123,
+  "h": 71
+ },
+ "drumstick": {
+  "w": 101,
+  "h": 80
+ },
+ "nugget_platter": {
+  "w": 133,
+  "h": 88
+ },
+ "tenders": {
+  "w": 112,
+  "h": 88
+ },
+ "wrap": {
+  "w": 108,
+  "h": 78
+ },
+ "cola_s": {
+  "w": 51,
+  "h": 68
+ },
+ "cola_m": {
+  "w": 63,
+  "h": 79
+ },
+ "cola_l": {
+  "w": 65,
+  "h": 87
+ },
+ "sprite_s": {
+  "w": 57,
+  "h": 75
+ },
+ "sprite_m": {
+  "w": 66,
+  "h": 86
+ },
+ "sprite_l": {
+  "w": 63,
+  "h": 88
+ },
+ "fanta_s": {
+  "w": 54,
+  "h": 69
+ },
+ "fanta_m": {
+  "w": 58,
+  "h": 77
+ },
+ "fanta_l": {
+  "w": 60,
+  "h": 82
+ },
+ "icetea_s": {
+  "w": 58,
+  "h": 82
+ },
+ "icetea_m": {
+  "w": 60,
+  "h": 85
+ },
+ "icetea_l": {
+  "w": 65,
+  "h": 94
+ },
+ "cone_vanilla": {
+  "w": 45,
+  "h": 73
+ },
+ "cone_choc": {
+  "w": 45,
+  "h": 74
+ },
+ "sundae_straw": {
+  "w": 53,
+  "h": 69
+ },
+ "sundae_choc": {
+  "w": 53,
+  "h": 68
+ },
+ "mcflurry_p": {
+  "w": 64,
+  "h": 75
+ },
+ "coffee_s": {
+  "w": 49,
+  "h": 61
+ },
+ "coffee_m": {
+  "w": 54,
+  "h": 63
+ },
+ "coffee_l": {
+  "w": 79,
+  "h": 74
+ },
+ "icedcoffee_p": {
+  "w": 51,
+  "h": 79
+ },
+ "shake_van": {
+  "w": 48,
+  "h": 76
+ },
+ "shake_straw": {
+  "w": 48,
+  "h": 79
+ },
+ "shake_choc": {
+  "w": 48,
+  "h": 74
+ },
+ "box_burger": {
+  "w": 70,
+  "h": 55
+ },
+ "box_nuggets": {
+  "w": 83,
+  "h": 57
+ },
+ "box_fries": {
+  "w": 54,
+  "h": 64
+ },
+ "box_wings": {
+  "w": 72,
+  "h": 47
+ },
+ "cup_s": {
+  "w": 49,
+  "h": 48
+ },
+ "cup_m": {
+  "w": 43,
+  "h": 61
+ },
+ "cup_l": {
+  "w": 42,
+  "h": 68
+ },
+ "straw1": {
+  "w": 28,
+  "h": 50
+ },
+ "straw2": {
+  "w": 70,
+  "h": 51
+ },
+ "tray": {
+  "w": 97,
+  "h": 47
+ },
+ "bag_paper": {
+  "w": 59,
+  "h": 64
+ },
+ "bag_takeaway": {
+  "w": 65,
+  "h": 70
+ },
+ "napkin": {
+  "w": 70,
+  "h": 43
+ },
+ "packet_ketchup": {
+  "w": 42,
+  "h": 46
+ },
+ "packet_mustard": {
+  "w": 44,
+  "h": 47
+ },
+ "sugar": {
+  "w": 32,
+  "h": 47
+ }
+}

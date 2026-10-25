@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>麦当劳 · 点餐 × 后厨实时动画</title>
+<style>
+:root { --red:#da291c; --red-d:#b71c12; --yellow:#ffbc0d; --ink:#27251f; --mute:#6f6b63; --line:#ece7dc; --bg:#faf7f0; }
+* { box-sizing:border-box; margin:0; padding:0; }
+html, body { height:100%; }
+body { font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif; color:var(--ink); background:#2a1a10; overflow:hidden; }
+#app { display:flex; height:100vh; }
+
+/* ---------- 左：后厨 ---------- */
+#stage { flex:1; min-width:0; display:flex; align-items:center; justify-content:center; background:#1f130b; position:relative; }
+#cv { height:100%; max-width:100%; aspect-ratio:868/1049; image-rendering:pixelated; image-rendering:crisp-edges; background:#e9d3a0; }
+#hud { position:absolute; left:12px; top:12px; display:flex; gap:8px; align-items:center; background:rgba(30,18,10,.72); color:#ffe9b8; padding:6px 10px; border-radius:10px; font-size:13px; }
+#hud button { border:0; background:#ffbc0d; color:#27251f; font-weight:700; border-radius:6px; padding:3px 8px; cursor:pointer; }
+#hud button.on { background:#fff; outline:2px solid #da291c; }
+
+/* ---------- 右：点餐 ---------- */
+#panel { width:min(460px,46vw); background:var(--bg); display:flex; flex-direction:column; box-shadow:-6px 0 24px rgba(0,0,0,.35); z-index:2; }
+.top { background:var(--red); color:#fff; display:flex; align-items:center; gap:12px; padding:10px 18px; border-bottom:4px solid var(--yellow); }
+.arch { font:900 40px/1 Arial,sans-serif; color:var(--yellow); letter-spacing:-3px; transform:scaleX(1.25); display:inline-block; width:46px; }
+.top h1 { font-size:18px; font-weight:800; }
+.top small { display:block; font-weight:400; opacity:.85; font-size:12px; margin-top:2px; }
+.body { flex:1; min-height:0; display:flex; }
+.cats { width:82px; background:#fff; border-right:1px solid var(--line); overflow-y:auto; }
+.cat { width:100%; border:0; background:none; padding:12px 4px 10px; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; font-size:13px; color:var(--mute); border-left:4px solid transparent; }
+.cat img { width:40px; height:40px; object-fit:contain; }
+.cat.on { color:var(--red); font-weight:700; background:#fff5db; border-left-color:var(--red); }
+.cat:hover:not(.on) { background:#faf7f0; }
+.grid { flex:1; overflow-y:auto; padding:14px; display:grid; grid-template-columns:repeat(auto-fill,minmax(122px,1fr)); gap:12px; align-content:start; }
+.card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:10px 8px 10px; text-align:center; cursor:pointer; position:relative; transition:transform .12s, box-shadow .12s; user-select:none; }
+.card:hover { transform:translateY(-2px); box-shadow:0 6px 16px rgba(0,0,0,.1); }
+.card:active { transform:scale(.97); }
+.card img { width:86px; height:78px; object-fit:contain; display:block; margin:0 auto 6px; image-rendering:pixelated; }
+.card .n { font-size:13.5px; font-weight:600; line-height:1.25; min-height:34px; display:flex; align-items:center; justify-content:center; }
+.card .p { color:var(--red); font-weight:800; font-size:15px; margin-top:2px; }
+.card .p::before { content:"¥"; font-size:11px; margin-right:1px; }
+.card .plus { position:absolute; right:8px; top:8px; width:26px; height:26px; border-radius:50%; background:var(--yellow); display:grid; place-items:center; font-weight:900; font-size:18px; line-height:1; }
+.card .combo { position:absolute; left:8px; top:8px; background:var(--red); color:#fff; font-size:10px; padding:1px 6px; border-radius:8px; }
+.card .sub { font-size:11px; color:var(--mute); margin-top:2px; line-height:1.3; }
+.card.pop { animation:pop .25s; }
+@keyframes pop { 50% { transform:scale(1.06); box-shadow:0 0 0 4px rgba(255,188,13,.55); } }
+
+/* 购物车 / 订单 */
+.cart { background:#fff; border-top:1px solid var(--line); box-shadow:0 -6px 16px rgba(0,0,0,.06); display:flex; flex-direction:column; max-height:44%; }
+.cart-h { display:flex; align-items:center; justify-content:space-between; padding:10px 16px 6px; font-weight:800; }
+.cart-h span { font-size:12px; font-weight:400; color:var(--mute); }
+.list { overflow-y:auto; padding:0 12px; min-height:56px; }
+.empty { color:#aaa39a; text-align:center; font-size:13px; padding:16px 0; }
+.row { display:flex; align-items:center; gap:10px; padding:6px 4px; border-bottom:1px dashed var(--line); animation:in .2s; }
+@keyframes in { from { opacity:0; transform:translateX(14px); } }
+.row img { width:38px; height:38px; object-fit:contain; image-rendering:pixelated; }
+.row .t { flex:1; min-width:0; }
+.row .t b { font-size:13.5px; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.row .t i { font-style:normal; font-size:11.5px; color:var(--mute); }
+.tag { font-size:11px; padding:2px 8px; border-radius:10px; white-space:nowrap; font-weight:700; }
+.tag.queued { background:#eee9dd; color:#6f6b63; }
+.tag.making { background:#ffe7a3; color:#8a5a00; animation:blink 1s infinite; }
+.tag.done { background:#d8f0d0; color:#2b7a1e; }
+@keyframes blink { 50% { opacity:.55; } }
+.row .x { width:26px; height:26px; border:1.5px solid #d9d3c6; background:#fff; border-radius:50%; cursor:pointer; color:#8a857b; font-size:15px; line-height:1; }
+.row .x:hover { border-color:var(--red); color:#fff; background:var(--red); }
+.foot { display:flex; align-items:center; gap:10px; padding:10px 14px 14px; }
+.sum { flex:1; font-size:12px; color:var(--mute); }
+.sum b { display:block; font-size:20px; color:var(--ink); }
+.btn { border:0; border-radius:22px; padding:11px 18px; font-weight:800; font-size:14px; cursor:pointer; }
+.btn.y { background:var(--yellow); color:var(--ink); }
+.btn.y:hover { background:#ffc83a; }
+.btn.g { background:#fff; border:1.5px solid #cfc8b8; color:var(--ink); }
+.btn.g:hover { border-color:var(--red); color:var(--red); }
+.btn[disabled] { opacity:.4; cursor:not-allowed; }
+.toast { position:fixed; left:50%; top:16px; transform:translateX(-50%); background:rgba(30,18,10,.9); color:#fff; padding:8px 18px; border-radius:20px; font-size:14px; opacity:0; transition:opacity .25s; pointer-events:none; z-index:9; }
+.toast.show { opacity:1; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="cv" width="868" height="1049"></canvas>
+    <div id="hud">后厨速度
+      <button data-s="1" class="on">1×</button><button data-s="2">2×</button><button data-s="4">4×</button>
+    </div>
+  </div>
+  <div id="panel">
+    <div class="top"><span class="arch">M</span><div><h1>麦当劳 · 点餐<small>右边点单，左边后厨马上开做</small></h1></div></div>
+    <div class="body">
+      <nav class="cats" id="cats"></nav>
+      <div class="grid" id="grid"></div>
+    </div>
+    <div class="cart">
+      <div class="cart-h">我的订单 <span id="cnt"></span></div>
+      <div class="list" id="list"></div>
+      <div class="foot">
+        <div class="sum">合计<b id="total">¥0</b></div>
+        <button class="btn g" id="clear">全部取消</button>
+        <button class="btn y" id="pick">取餐</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="js/sprites.js"></script>
+<script src="js/data.js"></script>
+<script src="js/menu.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/recipes.js"></script>
+<script src="js/render.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>
