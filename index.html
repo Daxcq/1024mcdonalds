@@ -72,6 +72,37 @@ body { font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif; color:v
 .btn.g { background:#fff; border:1.5px solid #cfc8b8; color:var(--ink); }
 .btn.g:hover { border-color:var(--red); color:var(--red); }
 .btn[disabled] { opacity:.4; cursor:not-allowed; }
+/* ---------- 制作进度卡片 ---------- */
+.prog { margin:10px 12px 0; flex:none; background:linear-gradient(180deg,#fff,#fbf8f1); border:1px solid #ece4d4; border-radius:18px; padding:12px 14px 12px; box-shadow:0 4px 16px rgba(80,50,10,.08); overflow:hidden; transition:opacity .3s, transform .3s, max-height .35s, margin .35s, padding .35s; max-height:230px; }
+.prog.hide { opacity:0; transform:translateY(-8px); max-height:0; margin-top:0; padding-top:0; padding-bottom:0; border-width:0; pointer-events:none; }
+.prog.swap { animation:swap .35s ease; }
+@keyframes swap { from { opacity:.2; transform:translateY(6px); } }
+.prog-h { display:flex; align-items:center; gap:12px; }
+.prog-ic { width:52px; height:52px; border-radius:14px; background:#f6efe2; display:grid; place-items:center; flex:none; }
+.prog-ic img { width:42px; height:42px; object-fit:contain; image-rendering:pixelated; }
+.prog-t { flex:1; min-width:0; }
+.prog-s { font-size:12px; color:#9a8f80; }
+.prog-n { font-size:19px; font-weight:800; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.prog-c { font-weight:800; font-size:15px; color:#9a8f80; font-variant-numeric:tabular-nums; }
+.prog-c b { color:var(--red); }
+.prog.sad .prog-s, .prog.sad .prog-c { color:#d6221a; }
+.bar { height:4px; background:#efe8da; border-radius:2px; margin:10px 0 10px; overflow:hidden; }
+.bar i { display:block; height:100%; width:0; background:linear-gradient(90deg,#ffbc0d,#da291c); border-radius:2px; transition:width .5s cubic-bezier(.2,.8,.2,1); }
+.steps { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px 6px; }
+.stp { min-width:0; display:flex; align-items:center; gap:6px; font-size:12px; color:#9a9186; transition:color .3s; }
+.stp .bx { flex:none; width:22px; height:22px; border-radius:7px; background:#efebe3; display:grid; place-items:center; font-size:12px; color:transparent; transition:background .3s, color .3s, transform .3s; }
+.stp span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.stp.done { color:#6f9468; }
+.stp.done .bx { background:#e1f0dc; color:#5d8f55; }
+.stp.done .bx::before { content:"✓"; }
+.stp.now { color:#d6221a; font-weight:800; }
+.stp.now .bx { background:#ffe3e3; animation:pulse 1.2s infinite; }
+.stp.now .bx::before { content:""; width:9px; height:9px; border-radius:3px; background:#dd2c4a; }
+@keyframes pulse { 50% { box-shadow:0 0 0 5px rgba(221,44,74,.15); } }
+.stp.pop .bx { animation:tick .4s; }
+@keyframes tick { 40% { transform:scale(1.3); } }
+.prog.sad .bar i { background:linear-gradient(90deg,#f1b0a8,#d6221a); }
+.prog.sad .stp.now .bx { background:#ffe3e3; }
 .toast { position:fixed; left:50%; top:16px; transform:translateX(-50%); background:rgba(30,18,10,.9); color:#fff; padding:8px 18px; border-radius:20px; font-size:14px; opacity:0; transition:opacity .25s; pointer-events:none; z-index:9; }
 .toast.show { opacity:1; }
 </style>
@@ -86,6 +117,15 @@ body { font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif; color:v
   </div>
   <div id="panel">
     <div class="top"><span class="arch">M</span><div><h1>麦当劳 · 点餐<small>右边点单，左边后厨马上开做</small></h1></div></div>
+    <div class="prog hide" id="prog" aria-live="polite">
+      <div class="prog-h">
+        <div class="prog-ic"><img id="pgImg" alt=""></div>
+        <div class="prog-t"><div class="prog-s" id="pgSub"></div><div class="prog-n" id="pgName"></div></div>
+        <div class="prog-c" id="pgCnt"></div>
+      </div>
+      <div class="bar"><i id="pgBar"></i></div>
+      <div class="steps" id="pgSteps"></div>
+    </div>
     <div class="body">
       <nav class="cats" id="cats"></nav>
       <div class="grid" id="grid"></div>

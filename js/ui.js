@@ -39,6 +39,53 @@
     }
   }
 
+  /* ---------- 制作进度卡片 ----------
+   * 只在订单变化时重建步骤格子；步骤推进时仅切换 class，所以过渡动画是连续的。
+   * 取消 / 丢弃时卡片保持显示该订单并变红，等丢完再切到下一单或收起。 */
+  const PG = { id: null, stage: -2, state: '', n: -1 };
+  function progress() {
+    const card = $('#prog');
+    let o = E.focus;
+    if (o && ['trashed', 'served', 'done'].includes(o.state) && o !== E.cur) {
+      // 已经做完 / 丢完：如果后面还有排队的，转去看下一单；否则收起
+      const nxt = E.orders.find((x) => x.state === 'making');
+      o = nxt || (o.state === 'done' && Date.now() - (o._doneAt || (o._doneAt = Date.now())) < 1500 ? o : null);
+    }
+    if (!o || !o.steps || !o.steps.length) {
+      if (PG.id !== null) { card.classList.add('hide'); PG.id = null; }
+      return;
+    }
+    const sad = o.state === 'cancelled' || o.state === 'trashed';
+    const n = o.steps.length;
+    if (PG.id !== o.id) {                       // 切换了订单：重建
+      PG.id = o.id; PG.stage = -2; PG.n = n;
+      $('#pgImg').src = png(o.def.sprite);
+      $('#pgName').textContent = o.def.name;
+      $('#pgSteps').innerHTML = o.steps.map((s) => `<div class="stp"><div class="bx"></div><span>${s}</span></div>`).join('');
+      $('#pgSteps').style.gridTemplateColumns = `repeat(${n <= 4 ? n : n <= 6 ? 3 : 4},minmax(0,1fr))`;
+      card.classList.remove('hide'); card.classList.remove('swap'); void card.offsetWidth; card.classList.add('swap');
+    }
+    const stage = o.state === 'done' ? n : o.stage;
+    const key = stage + '|' + o.state;
+    if (key === PG.state) return;
+    PG.state = key;
+    const cells = $('#pgSteps').children;
+    for (let i = 0; i < cells.length; i++) {
+      const c = cells[i], was = c.classList.contains('done');
+      const done = i < stage, now = i === stage && o.state === 'making';
+      c.classList.toggle('done', done);
+      c.classList.toggle('now', now);
+      if (done && !was) { c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop'); }
+    }
+    const shown = Math.min(n, Math.max(0, stage + (o.state === 'making' ? 1 : 0)));
+    $('#pgCnt').innerHTML = o.state === 'done' ? `<b>${n}</b> / ${n}` : sad ? '已取消' : `<b>${shown}</b> / ${n}`;
+    $('#pgBar').style.width = (o.state === 'done' ? 100 : sad ? 0 : ((stage + 0.5) / n) * 100) + '%';
+    $('#pgSub').textContent = sad ? '已取消 · 正在清理 · 订单 #' + String(o.id).padStart(3, '0')
+      : o.state === 'done' ? '制作完成 · 订单 #' + String(o.id).padStart(3, '0')
+      : '正在制作 · 订单 #' + String(o.id).padStart(3, '0');
+    card.classList.toggle('sad', sad);
+  }
+
   function bind() {
     $('#cats').addEventListener('click', (e) => { const b = e.target.closest('.cat'); if (!b) return; cat = b.dataset.c; renderCats(); renderGrid(); });
     $('#grid').addEventListener('click', (e) => {
@@ -73,6 +120,7 @@
       E.tick(now - last); last = now;
       MD.render(c, E);
       refreshSteps();
+      progress();
       requestAnimationFrame(frame);
     })(last);
   });

@@ -4,6 +4,39 @@
   const MD = g.MD, EASE = MD.EASE;
   const R = (MD.recipes = {});
 
+  /* ---------- 步骤状态栏：每个商品有哪些大步骤 ----------
+   * 汉堡的步骤按配料合并相邻的同类（蔬菜、酱料各算一步），否则 7 层的巨无霸会有十几格，装不下。
+   * labels 给界面显示；ingStage[i] 是配方里第 i 个配料对应的步骤序号。 */
+  const ING_GROUP = {
+    beef: ['煎烤肉饼', 'beef'], chicken: ['炸鸡排', 'chicken'], cheese: ['放上芝士', 'cheese'],
+    lettuce: ['加入蔬菜', 'veg'], tomato: ['加入蔬菜', 'veg'], pickle: ['加入蔬菜', 'veg'], onion: ['加入蔬菜', 'veg'],
+    ketchup: ['挤上酱汁', 'sauce'], mayo: ['挤上酱汁', 'sauce'], mid: ['中层面包', 'mid'],
+  };
+  MD.stepsFor = function (def) {
+    if (def.kind === 'burger') {
+      const labels = ['取下面包'], ingStage = [];
+      let last = null;
+      for (const ing of def.ing) {
+        const [name, grp] = ING_GROUP[ing];
+        // 连续的蔬菜 / 酱料合并成一格；肉饼、芝士每次单独一格
+        if (grp === last && (grp === 'veg' || grp === 'sauce')) { ingStage.push(labels.length - 1); continue; }
+        labels.push(name); ingStage.push(labels.length - 1); last = grp;
+      }
+      labels.push('盖上面包', '包装出餐');
+      return { labels, ingStage };
+    }
+    if (def.kind === 'drink') return { labels: ['拿杯子', '接饮料', '盖盖插管', '出餐'] };
+    if (def.kind === 'fry') {
+      const l = ['拿包装', '炸篮沥油', '铲起装盒'];
+      if (def.salt) l.push('撒盐');
+      l.push('出餐'); return { labels: l };
+    }
+    // soft
+    const l = [def.style === 'cone' ? '拿甜筒' : '拿杯子', '挤冰淇淋'];
+    if (def.style === 'flurry') l.push('搅拌'); else if (def.style === 'sundae') l.push('淋酱');
+    l.push('出餐'); return { labels: l };
+  };
+
   /* 走到站点 -> 伸手 -> 把东西“拿”到手上。返回手上的 prop */
   async function grab(A, st, make, text, ms = 560) {
     if (text) A.say(text);
@@ -20,6 +53,8 @@
   /* ------------------------- 汉堡 ------------------------- */
   R.burger = async function (A, o, def) {
     const E = A.E, L = MD.LAYER, bs = MD.ST.board.spot;
+    const S = MD.stepsFor(def), nSt = S.labels.length;
+    A.stage(0);
     // 1. 下层面包 -> 案板
     let bun = await grab(A, 'bun', spr('bun_bottom', L.bun_bottom.w), '取下层面包');
     A.say('放到案板上');
@@ -34,8 +69,10 @@
     await A.wait(150);
 
     // 2. 依次叠配料
-    for (const ing of def.ing) {
+    for (let ii = 0; ii < def.ing.length; ii++) {
+      const ing = def.ing[ii];
       const I = MD.ING[ing], lay = L[I.key];
+      A.stage(S.ingStage[ii]);
       if (ing === 'beef' || ing === 'chicken') {
         const take = await grab(A, I.st, spr(I.key, lay.w), I.take, 600);
         // 煎台翻面 / 炸锅沥油的小特效
@@ -77,6 +114,7 @@
     }
 
     // 3. 上层面包
+    A.stage(nSt - 2);
     const tb = await grab(A, 'bun', spr('bun_top', L.bun_top.w), '取上层面包');
     A.say('盖上上层面包');
     await A.walk('board');
@@ -88,6 +126,7 @@
     await A.wait(250);
 
     // 4. 压一压、包装 -> 成品图标
+    A.stage(nSt - 1);
     A.say('压实并包装');
     await A.reach([bs[0], bs[1] - burger.cum - 14], 600, () => {});
     await A.anim(380, (k) => { burger.squash = 1 - 0.1 * Math.sin(k * Math.PI); });
@@ -110,6 +149,7 @@
   /* ------------------------- 饮料 ------------------------- */
   R.drink = async function (A, o, def) {
     const E = A.E, ds = MD.ST.drink.spot, nz = MD.NOZZLE;
+    A.stage(0);
     A.say('拿杯子');
     await A.walk('drink');
     let cup;
@@ -125,6 +165,7 @@
     await A.wait(160);
 
     // 接饮料：出料口的液柱 + 杯里的液面上升
+    A.stage(1);
     A.say(def.id === 'hot_coffee' ? '接热咖啡' : '接饮料');
     const col = def.color;
     const stream = A.fxAdd((c) => {
@@ -140,6 +181,7 @@
     A.fxRm(stream);
     A.puff(cup.x, cup.y - 40, col, 5, { speed: 20, life: 300, g: 60 });
     await A.wait(150);
+    A.stage(2);
     A.say('盖盖子、插吸管');
     await A.pop(cup);
     await A.wait(180);
@@ -147,6 +189,7 @@
     if (def.steam) A.puff(cup.x, cup.y - 50, '#ffffff', 5, { speed: 10, up: -30, g: -20, life: 700 });
 
     // 取杯 -> 出餐
+    A.stage(3);
     A.pick(cup);
     await A.reach([cup.x, cup.y - 18], 360, () => { A.pick(cup); });
     o.where = 'hand';
@@ -156,7 +199,8 @@
   /* ------------------------- 薯条 / 炸鸡 ------------------------- */
   R.fry = async function (A, o, def) {
     const E = A.E, bk = MD.BASKET[def.basket];
-    const wy = () => E.worker.y;
+    const nSt = MD.stepsFor(def).labels.length;
+    A.stage(0);
     A.say('拿包装');
     await A.walk('fryer');
     let box;
@@ -166,7 +210,8 @@
     });
     o.main = box; o.where = 'hand';
     // 提起炸篮沥油
-    A.say(def.basket === 1 ? '提起炸篮，沥油' : '提起炸篮，沥油');
+    A.stage(1);
+    A.say('提起炸篮，沥油');
     let lift = 0;
     const basketFx = A.fxAdd((c) => {
       c.fillStyle = '#3b3b3b'; c.fillRect(bk[0] - 4, bk[1] - 36 - lift, 8, 4);
@@ -176,6 +221,7 @@
     await A.anim(500, (k) => { lift = k * 14; });
     A.puff(bk[0], bk[1] - 10, '#fff', 6, { speed: 24, up: -30, g: -20, life: 600 });
     // 装盒：三铲
+    A.stage(2);
     A.say('铲起装盒');
     for (let i = 1; i <= 3; i++) {
       const t0 = [bk[0], bk[1] - 12];
@@ -189,6 +235,7 @@
     }
     // 撒盐
     if (def.salt) {
+      A.stage(3);
       A.say('撒盐');
       await A.walk('fryer');
       const sx = box.x, sy = box.y - 48;
@@ -196,6 +243,7 @@
       await A.anim(320, (k) => { box.dx = Math.sin(k * 14) * 2; });
       box.dx = 0;
     }
+    A.stage(nSt - 1);
     await A.pop(box);
     await A.deliver(box, 52);
   };
@@ -203,6 +251,8 @@
   /* ------------------------- 冰淇淋 / 圣代 / 麦旋风 ------------------------- */
   R.soft = async function (A, o, def) {
     const E = A.E, is = MD.ST.ice.spot, W = def.style === 'cone' ? 30 : 34;
+    const nSt = MD.stepsFor(def).labels.length;
+    A.stage(0);
     A.say(def.style === 'cone' ? '拿甜筒' : '拿杯子');
     await A.walk('ice');
     let cup;
@@ -215,6 +265,7 @@
     let f;
     await A.reach([is[0], is[1] - 10], 460, () => { A.release(cup); f = A.fly(cup, [is[0], is[1]], 240, 20); });
     await f;
+    A.stage(1);
     A.say('挤冰淇淋');
     const nz = [is[0], is[1] - 62];
     const stream = A.fxAdd((c) => {
@@ -224,15 +275,18 @@
     cup.dx = 0;
     A.fxRm(stream);
     if (def.style === 'flurry') {
+      A.stage(2);
       A.say('搅拌麦旋风');
       await A.anim(900, (k) => { cup.dx = Math.sin(k * 30) * 2; cup.rot = Math.sin(k * 12) * 0.08; });
       cup.dx = 0; cup.rot = 0;
     } else if (def.style === 'sundae') {
+      A.stage(2);
       A.say('淋巧克力酱');
       const sauce = A.fxAdd((c) => { c.fillStyle = '#3b1b0f'; c.fillRect(cup.x - 1, cup.y - 56, 3, 14); });
       await A.anim(500, () => {});
       A.fxRm(sauce);
     }
+    A.stage(nSt - 1);
     await A.pop(cup);
     A.pick(cup);
     await A.reach([cup.x, cup.y - 18], 360, () => { A.pick(cup); });

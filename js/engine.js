@@ -50,7 +50,8 @@
     /* ---------- 订单接口（UI 调用） ---------- */
     add(pid) {
       const def = MD.P[pid];
-      const o = { id: ++this.seq, pid, def, state: 'queued', props: [], dead: false, step: '', main: null, where: null, slot: -1 };
+      const o = { id: ++this.seq, pid, def, state: 'queued', props: [], dead: false, step: '', main: null, where: null, slot: -1,
+        steps: MD.stepsFor ? MD.stepsFor(def).labels : [], stage: -1 };
       this.orders.push(o);
       this.emit();
       return o;
@@ -157,6 +158,7 @@
       const A = {
         E, order: owner,
         say(t) { if (owner) { owner.step = t; E.emit(); } },
+        stage(i) { if (owner && owner.steps && i > owner.stage) owner.stage = i; },   // 步骤状态栏：只增不减
         wait: (ms) => E._anim(owner, ms),
         anim: (ms, fn, ease) => E._anim(owner, ms, fn, ease),
         walk(target) {
@@ -257,11 +259,12 @@
       if (this._peek()) this.idleFor = 0;
     }
     async _make(o) {
-      this.cur = o; o.state = 'making'; this.idleFor = 0;
+      this.cur = o; this.focus = o; o.state = 'making'; this.idleFor = 0;
       this.worker.bubble = { sprite: o.def.sprite };
       this.emit();
       try {
         await MD.recipes[o.def.kind](this.api(o), o, o.def);
+        o.stage = o.steps.length;
         o.state = 'done'; o.step = '已出餐';
       } catch (e) {
         if (e instanceof Abort) { this.cur = null; await this._discard(o); }
@@ -277,6 +280,7 @@
     async _discard(o) {
       const A = this.api({ dead: false, props: [] });   // 不可打断的 owner
       const w = this.worker;
+      this.focus = o;
       w.mood = 'sad'; w.reach = null; w.moving = false;
       w.bubble = { sprite: o.def.sprite, cross: true };
       o.step = '丢弃中'; this.emit();
