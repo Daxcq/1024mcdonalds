@@ -1,0 +1,24 @@
+{
+  "model": "gpt-image-2-vip",
+  "mode": "user-configured API with reference image",
+  "source": "assets/sprites/worker.png",
+  "source_sha256": "92e104e8208a0dd26ccf39fafbb8136fdc96d9baffcb96c7dc400e94f316577c",
+  "source_unchanged": true,
+  "full_resolution": [
+    1024,
+    1536
+  ],
+  "transparent_corners": true,
+  "character_bounds": [
+    276,
+    28,
+    754,
+    1515
+  ],
+  "sprite_canvas": [
+    154,
+    200
+  ],
+  "sprite_asset": "assets/sprites/worker_anime_girl_v1.png",
+  "game_reference_changed": false
+}

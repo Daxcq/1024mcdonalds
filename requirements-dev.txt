@@ -1,0 +1,3 @@
+# 仅"生图/切图脚本"需要(scripts/imagegen_api.py、scripts/prepare_food_sprites.py)。
+# 运行服务和启动脚本不需要这些; 需要时再装:  pip install -r requirements-dev.txt
+pillow==13.0.0

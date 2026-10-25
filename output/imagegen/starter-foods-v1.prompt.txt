@@ -1,0 +1,21 @@
+Use case: stylized-concept
+Asset type: individual reusable pixel-art sprites for a warm fast-food cooking game, delivered on one sprite sheet.
+Input image 1: STYLE REFERENCE ONLY for warm colors, dark brown outlines, appetizing food silhouettes, and chunky pixels. Create a new, clean sprite sheet. Do NOT copy the reference's checkerboard background, text, labels, logos, cast shadows, or overhead perspective.
+
+Create EXACTLY 16 separate food sprites in a perfectly regular 4-column by 4-row grid on a 1024 x 1024 canvas. Every cell is exactly 256 x 256 output pixels, equivalent to 64 x 64 logical pixels. Position every item at the horizontal and vertical center of its own cell. No grid lines or visible cell boundaries. Nothing may extend outside its cell. Leave generous clean empty space between items.
+
+Exact order, left to right, top to bottom:
+Row 1: (1) sesame top burger bun alone; (2) bottom burger bun alone; (3) browned grilled beef patty alone; (4) golden crispy breaded chicken patty alone.
+Row 2: (5) single thin golden cheese slice with one slightly drooping corner; (6) ruffled green lettuce layer for a burger; (7) single horizontal red tomato slice; (8) two small thin green pickle slices next to each other.
+Row 3: (9) pale ivory onion rings seen from the side, with brown outlines and NO pink or purple; (10) small glossy red ketchup dollop; (11) small golden-yellow mustard dollop; (12) small ivory mayonnaise dollop. The three sauces are standalone food dollops, with NO bowls, plates, bottles, or containers.
+Row 4: (13) complete classic single-beef burger, containing the same bun, beef and lettuce design; (14) complete chicken burger with the same bun, crispy chicken and lettuce; (15) small plain red carton of golden fries, no logo; (16) plain red cola cup with a small straw, no logo or lettering.
+
+Camera: strict horizontal orthographic SIDE VIEW at the food's center height. All sprites have the SAME side view. No overhead view, no isometric projection, no 3/4 perspective. Flat burger layers are shown as horizontal profiles, NOT circular discs viewed from above. Curved bun silhouettes may show their naturally rounded dome. The sheet itself is flat and front-facing.
+
+Pixel rendering: authentic clean 16-bit game pixel art. Construct the whole sheet on a UNIFORM 256 x 256 logical pixel grid, then enlarge exactly 4x with nearest-neighbor scaling. Each logical pixel becomes one crisp uniform 4 x 4 block. Outer outlines are exactly ONE LOGICAL PIXEL thick in dark brown #3A2210 (four output pixels). Hard stair-step edges; no antialiasing, no blurred or soft outlines, no subpixel details, no gradients, no painterly brush strokes, no smooth 3D rendering. Use deliberate connected pixel clusters, not random tiny noise.
+
+Scale: top and bottom bun each have a logical width of about 48 pixels, i.e. 192 output pixels, 75% of a cell. Beef, chicken, lettuce, tomato and cheese follow the SAME physical scale so the burger ingredients can be stacked in the game. Fully assembled burgers use the same 48-logical-pixel bun width, NOT enlarged to a different scale. Small sauces remain naturally smaller. Fries and cup fit the same grid without becoming oversized. Maximum sprite width 192 output pixels; at least 64 output pixels of empty space between maximum-width neighbors.
+
+Lighting: fixed light from upper left, highlights upper left, self-shading lower right. Each main material uses only two or three discrete light/dark color steps. Warm orange-gold buns, rich red food and packaging, lively yellow cheese and fries, fresh warm greens, warm dark browns. Medium-high saturation, cozy fast-food warmth. Use a few carefully placed sesame and crunchy-texture pixels.
+
+Background: the ENTIRE negative space is a single exact opaque solid RGB #FF00FF magenta. Uniform all the way to every sprite boundary. No white background, no checkerboard, no transparency, no gradients, no ground, no contact shadows or cast shadows outside objects, no halos, no pink or magenta anywhere inside the sprites. Self-shading inside objects is allowed. No text, labels, logos, watermarks, frames, interface elements, hands, people, plates or extra objects. Exactly the 16 specified independent sprites and nothing else.

@@ -34,6 +34,10 @@ class Session:
     history: list[dict] = field(default_factory=list)
     pending_order: dict | None = None  # calculate_price 之后生成, 等用户点确认
 
+    order: dict | None = None  # 最近一笔真实订单, 与购物车/换店独立
+    order_busy: bool = False
+    order_uncertain: bool = False  # 创建请求超时, 不能安全重试
+
     def snapshot(self) -> dict:
         return {
             "store": self.store.__dict__ if self.store else None,

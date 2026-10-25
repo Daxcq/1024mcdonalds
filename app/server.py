@@ -9,8 +9,8 @@ import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from openai import APIError
 from pydantic import BaseModel, Field
@@ -19,14 +19,20 @@ from .agent import Agent
 from .burger import get_engine
 from .burger.game import parse_selection, pick_exact, state_json
 from .kitchen_api import make_router as make_kitchen_router
-from .mcd_client import McdClient, load_env
+from .mcd_client import McdClient, McdUnavailable, load_env
 from .menu import PANEL_GROUPS, panel_group
+from .order_api import make_router as make_order_router
 from .session import Session
+from .session_store import SessionStore
 from .tools import run_tool
 
 ROOT = Path(__file__).resolve().parent.parent
 STATIC = ROOT / "static"
-sessions: dict[str, Session] = {}
+# 带过期(默认 2 小时未使用)和数量上限(默认 500)的会话存储, 见 app/session_store.py
+sessions: SessionStore[Session] = SessionStore(
+    ttl=float(os.environ.get("SESSION_TTL_SECONDS", 2 * 3600)),
+    max_sessions=int(os.environ.get("MAX_SESSIONS", 500)),
+)
 mcd = McdClient()
 agent: Agent | None = None
 LLM_ENV = ("LLM_API_KEY", "LLM_BASE_URL", "LLM_MODEL")
@@ -39,7 +45,7 @@ DEMO_MODE = os.environ.get("DEMO_MODE", "1") != "0"
 async def lifespan(_: FastAPI):
     global agent
     load_env()
-    await mcd.start()
+    # 不在启动时连接 MCP(懒连接): 麦当劳接口暂时连不上, 也不能让整个网页打不开。
     # LLM 没配置时只关闭对话, 手动点菜单/购物车仍可用
     if all(os.environ.get(k) for k in LLM_ENV):
         agent = Agent(mcd)
@@ -48,6 +54,24 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+
+@app.middleware("http")
+async def _no_stale_frontend(request: Request, call_next):
+    """页面、脚本、接口每次都让浏览器向服务器确认是否有更新(no-cache = 可缓存但必须校验)。
+    不设置的话, 浏览器会按 Last-Modified 自行猜一个缓存时长, 前端改了也可能一直显示旧版本。
+    大体积的素材图(/assets)内容基本不变, 保持浏览器默认缓存。"""
+    resp = await call_next(request)
+    p = request.url.path
+    if p == "/" or p.startswith(("/js/", "/api/", "/workshop", "/npc")):
+        resp.headers["Cache-Control"] = "no-cache"
+    return resp
+
+
+@app.exception_handler(McdUnavailable)
+async def _mcd_unavailable(_: Request, e: McdUnavailable):
+    # 接口层统一把"麦当劳接口不可用"变成 503 + 可直接展示给用户的提示
+    return JSONResponse(status_code=503, content={"detail": str(e)})
 
 # 远端前端(index.html)引用 js/ 和 assets/。只挂这两个目录, 绝不把项目根挂出去,
 # 否则 .env(含 MCP token 与模型 key)、data/、app/ 源码都能被直接下载。
@@ -58,7 +82,8 @@ app.mount("/assets", StaticFiles(directory=ROOT / "assets"), name="assets")
 def get_session(sid: str) -> Session:
     s = sessions.get(sid)
     if not s:
-        raise HTTPException(404, "会话不存在")
+        # 会话过期或服务重启后都会走到这里; 前端据此提示"刷新页面"
+        raise HTTPException(404, "会话已过期, 请刷新页面重新开始")
     return s
 
 
@@ -66,8 +91,12 @@ async def _calc_price(s: Session) -> dict:
     return await run_tool("calculate_price", {}, s, mcd)
 
 
-# 后厨前端用的真实菜单 + 结算接口(见 app/kitchen_api.py)
-app.include_router(make_kitchen_router(get_session, _calc_price))
+async def _pick_store(s: Session, code: str) -> dict:
+    return await run_tool("select_store", {"store_code": code}, s, mcd)
+
+
+# 后厨前端用的真实菜单 + 结算 + 自动选店接口(见 app/kitchen_api.py)
+app.include_router(make_kitchen_router(get_session, _calc_price, lambda: _known_stores(), _pick_store))
 
 
 class ChatReq(BaseModel):
@@ -86,9 +115,8 @@ class CartReq(BaseModel):
     quantity: int = Field(ge=0, le=20)
 
 
-class ConfirmReq(BaseModel):
-    session_id: str
-    take_way_code: str
+class ResumeReq(BaseModel):
+    session_id: str | None = None
 
 
 class Ingr(BaseModel):
@@ -119,22 +147,14 @@ async def workshop():
     return FileResponse(STATIC / "burger-workshop.html")
 
 
-@app.get("/npc")
-async def npc_page():
-    return FileResponse(STATIC / "npc.html")
-
-
 @app.post("/api/session")
-async def new_session():
-    sid = uuid.uuid4().hex
-    sessions[sid] = Session(id=sid)
-    return {"session_id": sid}
-
-
-@app.get("/api/state")
-async def session_state(session_id: str):
-    """工坊页和对话页共用一个会话: 页面切换后用它恢复门店和购物车。"""
-    return {"state": get_session(session_id).snapshot()}
+async def new_session(req: ResumeReq | None = None):
+    s = sessions.get(req.session_id) if req and req.session_id else None
+    if s is None:
+        sid = uuid.uuid4().hex
+        s = Session(id=sid)
+        sessions.put(sid, s)
+    return {"session_id": s.id}
 
 
 @app.get("/api/stores")
@@ -142,9 +162,8 @@ async def stores(city: str, keyword: str):
     return await run_tool("search_stores", {"city": city, "keyword": keyword}, Session(id="tmp"), mcd)
 
 
-@app.get("/api/city/stores")
-async def city_stores():
-    """已离线整理的长春门店, 只返回配方表里确有汉堡数据的店, 并附上可玩汉堡数。"""
+def _known_stores() -> list[dict]:
+    """已离线整理的长春门店, 只保留配方表里确有汉堡数据的店, 并附上可玩汉堡数。"""
     eng = get_engine()
     path = Path(__file__).resolve().parent.parent / "data" / "stores_changchun.json"
     known = json.loads(path.read_text(encoding="utf-8"))
@@ -155,7 +174,12 @@ async def city_stores():
             out.append({"storeCode": st["storeCode"], "name": st["name"], "address": st.get("address"),
                         "hours": st.get("hours"), "burgerCount": n})
     out.sort(key=lambda x: -x["burgerCount"])
-    return {"stores": out}
+    return out
+
+
+@app.get("/api/city/stores")
+async def city_stores():
+    return {"stores": _known_stores()}
 
 
 @app.post("/api/store")
@@ -253,29 +277,4 @@ async def config():
     return {"demo": DEMO_MODE, "chat": agent is not None}
 
 
-@app.post("/api/order/confirm")
-async def confirm(req: ConfirmReq):
-    """唯一的下单入口: 用户在界面点击确认才会走到这里。"""
-    if DEMO_MODE:
-        # 服务端强制拦截, 不依赖前端是否隐藏了按钮
-        raise HTTPException(403, "演示模式已关闭真实下单。如需真实下单, 在 .env 设置 DEMO_MODE=0 后重启")
-    s = get_session(req.session_id)
-    p = s.pending_order
-    if not s.store or not p:
-        raise HTTPException(400, "请先算价再确认下单")
-    if p["items"] != s.cart.items_for_mcp():
-        s.pending_order = None
-        raise HTTPException(409, "购物车已变化, 请重新算价")
-    if req.take_way_code not in {t["code"] for t in p["takeWayList"]}:
-        raise HTTPException(400, "取餐方式无效")
-
-    r = await mcd.call(
-        "create-order",
-        {**s.store.scope(), "items": p["items"], "takeWayCode": req.take_way_code},
-        allow_write=True,
-    )
-    if not r.get("success"):
-        raise HTTPException(502, r.get("message", "下单失败"))
-    s.pending_order = None
-    s.cart.clear()
-    return {"order": r.get("data"), "message": r.get("message")}
+app.include_router(make_order_router(get_session, lambda: mcd, lambda: DEMO_MODE))

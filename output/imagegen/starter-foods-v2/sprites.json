@@ -1,0 +1,287 @@
+{
+  "cell_size": [
+    64,
+    64
+  ],
+  "grid": [
+    4,
+    4
+  ],
+  "display_scale": 4,
+  "outline": "#3A2210",
+  "background_key": "#FF00FF",
+  "sprites": [
+    {
+      "id": "bun_top",
+      "name": "面包上层",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "bounds": [
+        9,
+        20,
+        54,
+        43
+      ],
+      "file": "01_bun_top"
+    },
+    {
+      "id": "bun_bottom",
+      "name": "面包下层",
+      "rect": [
+        64,
+        0,
+        64,
+        64
+      ],
+      "bounds": [
+        10,
+        25,
+        53,
+        39
+      ],
+      "file": "02_bun_bottom"
+    },
+    {
+      "id": "beef_patty",
+      "name": "牛肉饼",
+      "rect": [
+        128,
+        0,
+        64,
+        64
+      ],
+      "bounds": [
+        10,
+        25,
+        53,
+        39
+      ],
+      "file": "03_beef_patty"
+    },
+    {
+      "id": "chicken_patty",
+      "name": "鸡肉饼",
+      "rect": [
+        192,
+        0,
+        64,
+        64
+      ],
+      "bounds": [
+        9,
+        24,
+        54,
+        39
+      ],
+      "file": "04_chicken_patty"
+    },
+    {
+      "id": "cheese",
+      "name": "芝士片",
+      "rect": [
+        0,
+        64,
+        64,
+        64
+      ],
+      "bounds": [
+        9,
+        26,
+        55,
+        37
+      ],
+      "file": "05_cheese"
+    },
+    {
+      "id": "lettuce",
+      "name": "生菜",
+      "rect": [
+        64,
+        64,
+        64,
+        64
+      ],
+      "bounds": [
+        8,
+        26,
+        56,
+        37
+      ],
+      "file": "06_lettuce"
+    },
+    {
+      "id": "tomato",
+      "name": "番茄片",
+      "rect": [
+        128,
+        64,
+        64,
+        64
+      ],
+      "bounds": [
+        11,
+        28,
+        52,
+        36
+      ],
+      "file": "07_tomato"
+    },
+    {
+      "id": "pickles",
+      "name": "酸黄瓜",
+      "rect": [
+        192,
+        64,
+        64,
+        64
+      ],
+      "bounds": [
+        11,
+        28,
+        53,
+        35
+      ],
+      "file": "08_pickles"
+    },
+    {
+      "id": "onion",
+      "name": "洋葱",
+      "rect": [
+        0,
+        128,
+        64,
+        64
+      ],
+      "bounds": [
+        12,
+        26,
+        51,
+        37
+      ],
+      "file": "09_onion"
+    },
+    {
+      "id": "ketchup",
+      "name": "番茄酱",
+      "rect": [
+        64,
+        128,
+        64,
+        64
+      ],
+      "bounds": [
+        18,
+        22,
+        46,
+        41
+      ],
+      "file": "10_ketchup"
+    },
+    {
+      "id": "mustard",
+      "name": "芥末酱",
+      "rect": [
+        128,
+        128,
+        64,
+        64
+      ],
+      "bounds": [
+        18,
+        22,
+        46,
+        41
+      ],
+      "file": "11_mustard"
+    },
+    {
+      "id": "mayonnaise",
+      "name": "蛋黄酱",
+      "rect": [
+        192,
+        128,
+        64,
+        64
+      ],
+      "bounds": [
+        18,
+        22,
+        46,
+        41
+      ],
+      "file": "12_mayonnaise"
+    },
+    {
+      "id": "beef_burger",
+      "name": "牛肉汉堡",
+      "rect": [
+        0,
+        192,
+        64,
+        64
+      ],
+      "bounds": [
+        8,
+        8,
+        56,
+        55
+      ],
+      "file": "13_beef_burger"
+    },
+    {
+      "id": "chicken_burger",
+      "name": "鸡肉汉堡",
+      "rect": [
+        64,
+        192,
+        64,
+        64
+      ],
+      "bounds": [
+        8,
+        8,
+        56,
+        55
+      ],
+      "file": "14_chicken_burger"
+    },
+    {
+      "id": "fries",
+      "name": "薯条",
+      "rect": [
+        128,
+        192,
+        64,
+        64
+      ],
+      "bounds": [
+        14,
+        8,
+        50,
+        55
+      ],
+      "file": "15_fries"
+    },
+    {
+      "id": "cola",
+      "name": "可乐",
+      "rect": [
+        192,
+        192,
+        64,
+        64
+      ],
+      "bounds": [
+        17,
+        6,
+        46,
+        57
+      ],
+      "file": "16_cola"
+    }
+  ]
+}

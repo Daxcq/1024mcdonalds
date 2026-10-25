@@ -2,7 +2,7 @@
 (function () {
   const MD = window.MD, $ = (s) => document.querySelector(s);
   const png = (k) => 'assets/sprites/' + k + '.png';
-  let cat = 'burger', E = null;
+  let cat = 'burger', E = null, orderPanel = null;
   const toast = (t) => { const e = $('#toast'); e.textContent = t; e.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => e.classList.remove('show'), 1600); };
 
   function renderCats() {
@@ -127,20 +127,43 @@
     try {
       const p = await MD.API.checkout(act);
       const off = p.discount ? '，已优惠 ' + money(p.discount) : '';
-      toast('应付 ' + money(p.price) + off + (MD.API.demo ? '（演示模式，不下单）' : ''));
+      toast('应付 ' + money(p.price) + off);
+      orderPanel.onCreated = () => {
+        act.slice().reverse().forEach((o) => E.cancel(o));
+        MD.API.pending = null; renderCart();
+      };
+      orderPanel.showQuote(p);
       $('#total').textContent = money(p.price);
     } catch (e) { toast(e.message); }
     btn.disabled = false;
   }
+  /* 启动时自动选店：成功就直接是真实菜单；失败就保持离线演示菜单，并把原因写在副标题里，
+   * 不再弹窗打断（想换店随时点右上角「选门店」）。 */
+  async function autoPick() {
+    setSubtitle('正在连接门店…');
+    try {
+      const r = await MD.API.autoStore();
+      if (!MD.CATS.some((c) => c.id === cat)) cat = MD.CATS[0].id;
+      renderCats(); renderGrid(); renderCart();
+      const name = (r.store.name || '').replace('麦当劳', '');
+      const skipped = r.tried && r.tried.length ? '（已跳过 ' + r.tried.length + ' 家未营业的店）' : '';
+      setSubtitle(name + ' · 真实菜单');
+      if (skipped) toast('已为你选了营业中的「' + name + '」' + skipped);
+    } catch (e) {
+      setSubtitle('离线演示菜单（价格是示例） · ' + e.message);
+    }
+  }
+
   function bindStore() {
     const A = MD.API;
     if (!A || !A.online) return;                       // 离线: 保持原样
     $('#store').hidden = false; $('#checkout').hidden = false;
     $('#store').addEventListener('click', openStores);
     $('#smClose').addEventListener('click', () => { $('#storeModal').style.display = 'none'; });
+    orderPanel = new McdOrders({ api: A.call, sessionId: () => A.sid, demo: A.demo });
+    orderPanel.restore().catch((e) => toast(e.message));
     $('#checkout').addEventListener('click', doCheckout);
-    setSubtitle('离线演示菜单 · 点右上角「选门店」换成真实价格');
-    openStores();
+    autoPick();
   }
 
   function bind() {
@@ -173,6 +196,7 @@
     c.imageSmoothingEnabled = true;
     renderCats(); renderGrid(); renderCart(); bind();
     E.on(renderCart);
+    document.dispatchEvent(new Event('md:ready'));   // js/npc.js 等扩展在引擎就绪后挂接
     let last = performance.now();
     (function frame(now) {
       E.tick(now - last); last = now;

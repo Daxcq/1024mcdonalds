@@ -4,11 +4,13 @@ import os
 
 from openai import AsyncOpenAI
 
-from .mcd_client import McdClient
+from .history import trim_history
+from .mcd_client import McdClient, McdUnavailable
 from .session import Session
 from .tools import TOOL_SPECS, run_tool
 
 MAX_STEPS = 8
+MAX_HISTORY = 40  # 历史消息条数上限(含工具调用与结果), 超出时丢最老的完整回合
 
 SYSTEM_PROMPT = """你是麦当劳点单台的店员助手"小麦", 帮顾客点餐并做推荐。
 
@@ -51,6 +53,7 @@ class Agent:
         )
 
     async def chat(self, s: Session, user_text: str) -> dict:
+        trim_history(s.history, MAX_HISTORY)  # 长对话只保留最近的完整回合, 防止越聊越慢越贵
         mark = len(s.history)  # 本轮失败时回滚到这里, 避免留下残缺的 tool_calls 对话
         s.history.append({"role": "user", "content": user_text})
         trace: list[dict] = []
@@ -97,7 +100,11 @@ class Agent:
                     if not isinstance(args, dict):
                         raise ValueError("参数必须是 JSON 对象")
                     out = await run_tool(name, args, s, self.mcd)
-                except Exception as e:  # 工具失败交给模型自己处理, 不要让整轮对话崩掉
+                except McdUnavailable:
+                    # 麦当劳接口整体不可用不是模型能解决的问题: 终止本轮并回滚, 由接口层统一返回 503 提示,
+                    # 否则模型会拿到一句报错然后反复重试同一个调用
+                    raise
+                except Exception as e:  # 其他工具失败交给模型自己处理, 不要让整轮对话崩掉
                     args = {}
                     out = {"error": f"{type(e).__name__}: {e}"}
                 trace.append({"tool": name, "input": args, "ok": "error" not in out})

@@ -238,7 +238,7 @@ $('confirm').onclick = async () => {
   const w = ways[parseInt(pick, 10) - 1]; if (!w) return;
   if (!confirm(`确认下单 ${yuan(state.pending.price)} (${w.title})?`)) return;
   try {
-    const r = await api('/api/order/confirm', {session_id:sid, take_way_code:w.code});
+    const r = await api('/api/order/confirm', {session_id:sid, quote_id:state.pending.quote_id, take_way_code:String(w.code)});
     say('下单成功。' + (r.message || '') + ' 请按提示完成支付。', 'bot');
     const o = r.order || {}; if (o.payH5Url) say('支付链接: ' + o.payH5Url, 'sys');
     setState({...state, cart:{lines:[], total:0}, pending:null});

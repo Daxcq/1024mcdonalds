@@ -1,4 +1,6 @@
 """agent 可用的工具。注意: 这里没有 create_order, 下单只能走 server 的确认接口。"""
+from uuid import uuid4
+
 from .mcd_client import McdClient
 from .menu import attach_kcal, panel_group, parse_menu, parse_nutrition, search
 from .session import Session, Store
@@ -126,11 +128,11 @@ async def run_tool(name: str, args: dict, s: Session, mcd: McdClient) -> dict:
 
     if name == "select_store":
         code = args["store_code"]
-        s.store = Store(store_code=code, name=code)
-        r = await mcd.call("query-meals", s.store.scope())
+        cand = Store(store_code=code, name=code)
+        # 先用候选店取菜单, 成功了才替换会话里的店: 失败时(打烊/网络)保持原来已选的店和购物车不变
+        r = await mcd.call("query-meals", cand.scope())
         meals = parse_menu(r)
         if not meals:
-            s.store = None
             msg = r.get("message", "该门店菜单为空")
             if "关闭" in msg or "营业时间" in msg:
                 msg = "这家店现在已打烊或不在营业时间, 换一家营业中的店, 或明天再来"
@@ -138,6 +140,7 @@ async def run_tool(name: str, args: dict, s: Session, mcd: McdClient) -> dict:
         if not s.nutrition:
             s.nutrition = parse_nutrition(await mcd.call("list-nutrition-foods"))
         attach_kcal(meals, s.nutrition)
+        s.store = cand
         s.menu = {m.code: m for m in meals}
         s.cart.clear()
         s.pending_order = None
@@ -205,16 +208,24 @@ async def run_tool(name: str, args: dict, s: Session, mcd: McdClient) -> dict:
     if name == "calculate_price":
         if not s.cart.lines:
             return {"error": "购物车是空的"}
-        r = await mcd.call("calculate-price", {**s.store.scope(), "items": s.cart.items_for_mcp()})
+        items = s.cart.items_for_mcp()
+        scope = s.store.scope()
+        lines = s.cart.to_dict()["lines"]
+        r = await mcd.call("calculate-price", {**scope, "items": items})
         d = r.get("data")
         if not d:
             return {"error": r.get("message", "算价失败")}
+        if items != s.cart.items_for_mcp() or not s.store or scope != s.store.scope():
+            return {"error": "购物车或门店已变化, 请重新算价"}
         s.pending_order = {
+            "quote_id": uuid4().hex,
+            "store": s.store.__dict__.copy(),
+            "lines": lines,
             "original": d["originalPrice"] / 100,
             "discount": d["discount"] / 100,
             "price": d["price"] / 100,
             "takeWayList": d.get("takeWayList", []),
-            "items": s.cart.items_for_mcp(),
+            "items": items,
         }
         return {"price_yuan": s.pending_order["price"], "discount_yuan": s.pending_order["discount"],
                 "take_ways": [t["title"] for t in s.pending_order["takeWayList"]],

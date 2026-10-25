@@ -34,8 +34,11 @@ def make_app(menu):
         sess.pending_order = {"price": sess.cart.total() - 1, "discount": 1.0, "takeWayList": [], "items": sess.cart.items_for_mcp()}
         return {"ok": True}
 
+    async def no_pick(sess, code):          # 结算接口用不到选店
+        raise AssertionError("结算不应触发选店")
+
     app = FastAPI()
-    app.include_router(make_router(get_session, calc))
+    app.include_router(make_router(get_session, calc, lambda: [], no_pick))
     return TestClient(app), s, calls
 
 

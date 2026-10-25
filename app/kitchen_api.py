@@ -1,4 +1,4 @@
-"""后厨前端(根目录 index.html + js/)使用的接口: 真实菜单 + 结算。
+"""后厨前端(根目录 index.html + js/)使用的接口: 真实菜单 + 结算 + 自动选店。
 
 单独成模块, 用工厂函数接入 server.py, 这样 server.py 只需要多一行 include_router,
 不会和同时在改 server.py 的其他工作冲突。
@@ -10,10 +10,21 @@
 """
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from .autostore import MAX_TRIES, rank_stores
 from .kitchen import build_menu
+from .mcd_client import McdUnavailable
+
+CN = timezone(timedelta(hours=8))   # 门店在中国: 判断"现在是否营业"一律按北京时间, 不依赖服务器所在时区
+
+
+def now_minutes_cn(clock=None) -> int:
+    t = (clock or (lambda: datetime.now(CN)))()
+    return t.hour * 60 + t.minute
 
 
 class Line(BaseModel):
@@ -26,8 +37,19 @@ class CheckoutReq(BaseModel):
     items: list[Line] = Field(min_length=1, max_length=40)
 
 
-def make_router(get_session, calc_price) -> APIRouter:
-    """get_session(sid)->Session; calc_price(session)->dict, 失败时含 'error'。由 server.py 绑定 mcd 后传入。"""
+class AutoReq(BaseModel):
+    session_id: str
+    preferred: str | None = Field(default=None, max_length=24)   # 玩家上次手动选的店, 由前端从本地记忆里带上来
+
+
+def make_router(get_session, calc_price, list_stores, pick_store, clock=None) -> APIRouter:
+    """
+    get_session(sid) -> Session
+    async calc_price(session) -> dict       失败时含 'error'
+    list_stores() -> list[dict]            每项含 storeCode / name / hours / burgerCount
+    async pick_store(session, code) -> dict  成功返回 {'ok': True}, 失败返回 {'error': 文案}; MCP 整体不可用时抛 McdUnavailable
+    clock() -> datetime(带时区)             测试时注入
+    """
     r = APIRouter(prefix="/api/kitchen")
 
     @r.get("/menu")
@@ -42,6 +64,30 @@ def make_router(get_session, calc_price) -> APIRouter:
             "items": [it.to_dict() for it in rep.mapped],
             "summary": rep.summary(),
         }
+
+    @r.post("/auto-store")
+    async def auto_store(req: AutoReq):
+        """自动选一家能点单的店并加载菜单。按"优先级"依次尝试, 取到菜单即停。
+
+        返回 {store, items, tried}; 全部尝试失败时返回 409 并说明原因(而不是 500),
+        前端据此保持离线演示菜单并提示"现在可能都已打烊"。
+        MCP 整体不可用(网络/token)时直接抛出, 由全局处理器变成 503, 不再逐家重试。"""
+        s = get_session(req.session_id)
+        known = list_stores()
+        order = rank_stores(known, now_minutes_cn(clock), req.preferred, MAX_TRIES)
+        tried: list[dict] = []
+        for st in order:
+            out = await pick_store(s, st["storeCode"])      # McdUnavailable 向上抛, 不吞
+            if out.get("error"):
+                tried.append({"storeCode": st["storeCode"], "name": st.get("name"), "reason": out["error"]})
+                continue
+            rep = build_menu(list(s.menu.values()))
+            return {
+                "store": {k: st.get(k) for k in ("storeCode", "name", "address", "hours", "burgerCount")},
+                "items": [it.to_dict() for it in rep.mapped],
+                "tried": tried,
+            }
+        raise HTTPException(409, "试了 %d 家门店都取不到菜单，可能现在都已打烊。可以点右上角「选门店」手动选择，或稍后再试。" % len(tried))
 
     @r.post("/checkout")
     async def checkout(req: CheckoutReq):

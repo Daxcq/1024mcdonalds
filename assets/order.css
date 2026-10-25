@@ -1,0 +1,28 @@
+.mcd-order { width:min(500px,calc(100vw - 24px)); max-height:88vh; margin:auto; padding:20px; border:1px solid #ece7dc; border-radius:18px; color:#27251f; background:#faf7f0; font:14px/1.6 "Microsoft YaHei",system-ui,sans-serif; overflow:auto; }
+.mcd-order::backdrop { background:rgba(30,18,10,.65); }
+.mcd-order [hidden], .mcd-order-open[hidden] { display:none !important; }
+.mcd-order header, .mcd-order .order-actions { display:flex; gap:10px; align-items:center; justify-content:space-between; }
+.mcd-order h2 { font-size:20px; margin:0; }
+.mcd-order p { margin:10px 0; overflow-wrap:anywhere; }
+.mcd-order button, .mcd-order select, .mcd-order a { min-height:44px; font:inherit; border-radius:10px; }
+.mcd-order button { padding:8px 14px; border:1px solid #d5cdbf; background:#fff; color:#27251f; cursor:pointer; }
+.mcd-order button:hover { background:#fff1ce; }
+.mcd-order button:disabled { opacity:.5; cursor:default; }
+.mcd-order :focus-visible, .mcd-order-open:focus-visible { outline:3px solid #b71c12; outline-offset:3px; }
+.mcd-order [data-close] { font-size:24px; min-width:44px; }
+.mcd-order .order-field { display:grid; gap:6px; margin:14px 0; }
+.mcd-order select { width:100%; padding:8px; border:1px solid #a49b8d; background:#fff; color:#27251f; }
+.mcd-order .order-primary { display:block; width:100%; background:#ffbc0d; border:1px solid #b88600; color:#27251f; padding:10px; text-align:center; font-weight:700; text-decoration:none; box-sizing:border-box; }
+.mcd-order .order-danger { border-color:#b71c12; color:#b71c12; }
+.mcd-order dl { display:grid; grid-template-columns:80px minmax(0,1fr); gap:8px; margin:16px 0; }
+.mcd-order dd { margin:0; overflow-wrap:anywhere; }
+.mcd-order dt { color:#6f6b63; }
+.mcd-order fieldset { border:1px solid #d5cdbf; padding:12px; margin:16px 0; border-radius:10px; }
+.mcd-order strong { display:block; color:#b71c12; font-size:22px; margin:12px 0; }
+.mcd-order pre { white-space:pre-wrap; overflow-wrap:anywhere; font-size:12px; }
+.mcd-order details { margin-top:16px; }
+.mcd-order summary { cursor:pointer; min-height:44px; display:flex; align-items:center; }
+.mcd-order .order-error { color:#b71c12; }
+.mcd-order [data-feedback] { min-height:24px; }
+.mcd-order-open { position:fixed; right:16px; bottom:16px; z-index:15; min-height:44px; padding:10px 18px; border:2px solid #ffbc0d; border-radius:24px; background:#b71c12; color:#fff; font:700 14px system-ui,sans-serif; box-shadow:0 4px 18px #0003; cursor:pointer; }
+@media (max-width:400px) { .mcd-order { padding:16px; } .mcd-order .order-actions { flex-wrap:wrap; } .mcd-order .order-actions button { flex:1; } }

@@ -1,0 +1,132 @@
+/* 小麦对话页(二次元立绘 + 底部对话框 + 右上竖排地点牌)。
+ * 配色沿用主页: 红 #da291c / 深红 #b71c12 / 金 #ffbc0d / 墨 #27251f / 奶油 #fff6df。 */
+
+/* ---------- 后厨画面上的入口提示 ---------- */
+.npc-tip { position:absolute; z-index:3; transform:translate(-100%,-100%); border:2px solid #27251f; background:#fff6df; color:#27251f; border-radius:12px;
+           padding:3px 10px 3px 6px; font-family:inherit; font-weight:700; font-size:12px; line-height:1.6; white-space:nowrap; cursor:pointer; box-shadow:0 3px 0 rgba(0,0,0,.3); animation:npcTipBob 1s ease-in-out infinite; }
+.npc-tip:focus-visible, .npc-fab:focus-visible { outline:3px solid #1a73e8; outline-offset:2px; }
+.npc-fab { position:absolute; right:12px; top:12px; z-index:3; display:flex; align-items:center; gap:6px; background:#ffbc0d; color:#27251f; border:2px solid #27251f; border-radius:999px;
+           padding:5px 14px 5px 8px; font-family:inherit; font-weight:800; font-size:13px; cursor:pointer; box-shadow:0 3px 0 rgba(0,0,0,.35); }
+.npc-fab:hover { background:#ffd45e; }
+.npc-tip::after { content:""; position:absolute; right:10px; top:100%; border:6px solid transparent; border-top-color:#27251f; border-bottom:0; }
+.npc-tip[hidden] { display:none; }
+@keyframes npcTipBob { 50% { margin-top:-4px; } }
+.npc-kbd { display:inline-block; min-width:1.5em; text-align:center; background:#ffbc0d; border:2px solid #27251f; border-radius:5px; font-weight:900; line-height:1.3; padding:0 3px; margin-right:3px; }
+
+/* ---------- 对话场景 ---------- */
+.npcvn { position:fixed; inset:0; z-index:50; display:none; overflow:hidden; color:#27251f; --boxh:clamp(150px,27vh,270px);
+         font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif; }
+.npcvn.open { display:block; animation:npcIn .3s ease-out; }
+.npcvn.out { animation:npcOut .24s ease-in forwards; }
+@keyframes npcIn { from { opacity:0; } }
+@keyframes npcOut { to { opacity:0; } }
+.npcvn button { font:inherit; color:inherit; cursor:pointer; }
+.npcvn button:focus-visible { outline:3px solid #1a73e8; outline-offset:2px; }
+.npcvn .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+.vn-bg { position:absolute; inset:-3%; background:url("../kitchen_bg.png") center 38%/cover; filter:blur(7px) saturate(1.1) brightness(.9); }
+.vn-tint { position:absolute; inset:0; background:
+           radial-gradient(ellipse at 28% 38%, rgba(255,236,190,.4), transparent 62%),
+           linear-gradient(180deg, rgba(218,41,28,.28), rgba(39,20,8,.08) 42%, rgba(39,20,8,.6) 100%); }
+.vn-seeds { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.vn-seed { position:absolute; top:-24px; background:#f7e1a0; border:2px solid #c99a3c; border-radius:50%; opacity:.85; animation:npcFall linear infinite; }
+@keyframes npcFall { to { transform:translate(var(--dx),112vh) rotate(var(--rot)); } }
+
+.vn-portrait { position:absolute; left:5vw; bottom:-15vh; height:114vh; z-index:2; animation:npcSlide .45s cubic-bezier(.2,.8,.2,1); pointer-events:none; }
+.vn-portrait img { height:100%; width:auto; display:block; filter:drop-shadow(0 10px 18px rgba(0,0,0,.4)); transform-origin:50% 100%; }
+.vn-portrait.talk img { animation:npcTalk .5s ease-in-out infinite; }
+@keyframes npcSlide { from { transform:translateX(-5vw); opacity:0; } }
+@keyframes npcTalk { 50% { transform:translateY(-5px) scale(1.005); } }
+
+/* 右上竖排地点牌 */
+.vn-plaque { position:absolute; top:0; right:3.5vw; z-index:3; width:clamp(84px,9vw,124px); padding:12px 8px 22px; display:flex; flex-direction:column; align-items:center; gap:12px;
+             background:linear-gradient(#fff9ea,#ffe9b8); border:3px solid #b71c12; border-top:0; border-radius:0 0 16px 16px;
+             box-shadow:inset 0 0 0 3px #fff6df, inset 0 0 0 5px rgba(255,188,13,.85), 0 10px 22px rgba(0,0,0,.35); }
+.vn-emblem { width:46px; height:46px; border-radius:50%; background:#da291c; color:#ffbc0d; border:3px solid #ffbc0d; box-shadow:0 0 0 2px #b71c12;
+             font:900 28px/40px Arial,sans-serif; text-align:center; }
+.vn-cols { display:flex; flex-direction:row-reverse; gap:10px; align-items:flex-start; }
+.vn-title { writing-mode:vertical-rl; font-size:clamp(28px,3.6vw,50px); font-weight:900; letter-spacing:.2em; color:#b71c12; line-height:1.1; }
+.vn-loc { writing-mode:vertical-rl; font-size:13px; letter-spacing:.18em; color:#6f6b63; padding-right:8px; border-right:2px solid #ffbc0d; margin-top:6px; max-height:34vh; }
+
+.vn-top { position:absolute; left:14px; top:12px; z-index:4; }
+.vn-chip { background:#fff6df; border:2px solid #27251f; border-radius:999px; padding:5px 14px; font-weight:700; font-size:13px; box-shadow:0 3px 0 rgba(0,0,0,.3); }
+.vn-chip { color:#27251f; }
+.vn-chip:hover { background:#ffbc0d; }
+
+/* 底部对话框 */
+.vn-box { position:absolute; z-index:4; left:3vw; right:3vw; bottom:3vh; height:var(--boxh); padding:clamp(26px,5.2vh,46px) clamp(18px,4vw,64px) 14px clamp(22px,6vw,110px);
+          background:linear-gradient(#fffaf0,#fff0cf); border:3px solid #27251f; border-radius:18px; cursor:pointer;
+          box-shadow:inset 0 0 0 4px #fff6df, inset 0 0 0 6px rgba(255,188,13,.9), 0 12px 28px rgba(0,0,0,.45); }
+.vn-box:focus-visible { outline:3px solid #1a73e8; outline-offset:4px; }
+.vn-name { position:absolute; left:clamp(10px,2vw,32px); top:-22px; display:flex; align-items:center; gap:10px; padding:3px 26px 3px 4px; background:#b71c12; color:#ffe9b8;
+           border:3px solid #27251f; border-radius:999px; font-size:clamp(16px,1.8vw,24px); font-weight:900; letter-spacing:.35em; box-shadow:0 4px 0 rgba(0,0,0,.3); }
+.vn-name i { width:36px; height:36px; border-radius:50%; background:#ffbc0d; color:#da291c; border:3px solid #27251f; font:900 21px/30px Arial,sans-serif; text-align:center; letter-spacing:0; }
+.vn-text { height:100%; overflow-y:auto; font-size:clamp(17px,1.9vw,27px); line-height:1.85; letter-spacing:.06em; }
+.vn-next { position:absolute; left:50%; margin-left:-13px; bottom:10px; width:0; height:0; border:13px solid transparent; border-top:17px solid #da291c; border-bottom:0; display:none; animation:npcNext .9s steps(2) infinite; }
+.vn-box.more .vn-next { display:block; }
+@keyframes npcNext { 50% { transform:translateY(5px); } }
+
+/* 选项 */
+.vn-choices { position:absolute; z-index:5; right:clamp(150px,14vw,260px); bottom:calc(var(--boxh) + 3vh + 18px); width:min(360px,calc(100vw - 40px)); display:flex; flex-direction:column; gap:9px;
+               max-height:calc(100vh - var(--boxh) - 3vh - 18px - 14px); overflow-y:auto; padding:2px 8px 6px 2px; }
+.vn-choices[hidden] { display:none; }
+.vn-choice { display:flex; align-items:center; gap:10px; text-align:left; padding:9px 14px; background:linear-gradient(#fffaf0,#ffefc8); border:3px solid #27251f; border-radius:12px;
+             font-size:clamp(15px,1.5vw,19px); font-weight:800; box-shadow:0 4px 0 #27251f, inset 0 0 0 2px rgba(255,188,13,.9); animation:npcPop .22s ease-out backwards; }
+.vn-choice:nth-child(2) { animation-delay:.04s; } .vn-choice:nth-child(3) { animation-delay:.08s; } .vn-choice:nth-child(4) { animation-delay:.12s; }
+.vn-choice:nth-child(5) { animation-delay:.16s; } .vn-choice:nth-child(6) { animation-delay:.2s; } .vn-choice:nth-child(7) { animation-delay:.24s; }
+.vn-choice kbd { flex:none; min-width:1.7em; text-align:center; background:#ffbc0d; border:2px solid #27251f; border-radius:6px; font-weight:900; font-size:13px; line-height:1.6; }
+.vn-choice small { margin-left:auto; font-weight:500; font-size:12px; color:#6f6b63; }
+.vn-choice:hover, .vn-choice.on { background:#ffbc0d; transform:translateX(-6px); }
+.vn-choice.back { background:#efe6cf; }
+@keyframes npcPop { from { transform:translateX(26px); opacity:0; } }
+
+/* 对话内点单面板: 位于立绘右侧、地点牌左侧、对话框上方 */
+.vn-sheet { position:absolute; z-index:6; top:14px; left:36vw; right:calc(3.5vw + clamp(84px,9vw,124px) + 16px); bottom:calc(var(--boxh) + 3vh + 26px); display:flex; flex-direction:column;
+            background:#faf7f0; border:3px solid #27251f; border-radius:16px; overflow:hidden; box-shadow:0 12px 28px rgba(0,0,0,.45); animation:npcPop .2s ease-out; }
+.vn-sheet[hidden] { display:none; }
+.vn-sheet > header { display:flex; align-items:center; gap:10px; padding:8px 14px; background:#da291c; color:#fff; border-bottom:4px solid #ffbc0d; }
+.vn-sheet > header b { font-size:18px; letter-spacing:.2em; color:#ffbc0d; }
+.vn-sheet > header small { opacity:.9; }
+.vn-sheet .sp { flex:1; }
+.sheet-body { flex:1; min-height:0; display:flex; }
+.sheet-tabs { width:84px; flex:none; background:#fff; border-right:1px solid #ece7dc; overflow-y:auto; }
+.sh-tab { width:100%; border:0; background:none; padding:10px 2px 8px; display:flex; flex-direction:column; align-items:center; gap:3px; font-size:13px; color:#6f6b63; border-left:4px solid transparent; }
+.sh-tab img { width:36px; height:36px; object-fit:contain; image-rendering:pixelated; }
+.sh-tab.on { color:#da291c; font-weight:700; background:#fff5db; border-left-color:#da291c; }
+.sheet-grid { flex:1; overflow-y:auto; padding:12px; display:grid; grid-template-columns:repeat(auto-fill,minmax(128px,1fr)); gap:10px; align-content:start; }
+.sh-card { background:#fff; border:1px solid #ece7dc; border-radius:14px; padding:8px 6px 8px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:2px; }
+.sh-card.has { border-color:#da291c; background:#fff8e6; }
+.sh-card img { width:72px; height:64px; object-fit:contain; image-rendering:pixelated; }
+.sh-card .n { font-size:13px; font-weight:600; line-height:1.25; min-height:33px; display:flex; align-items:center; justify-content:center; }
+.sh-card .p { color:#da291c; font-weight:800; }
+.sh-card .sub { font-size:11px; color:#6f6b63; line-height:1.3; }
+.sh-qty { display:flex; align-items:center; gap:8px; margin-top:4px; }
+.sh-qty button { width:30px; height:30px; padding:0; border-radius:50%; border:2px solid #27251f; background:#ffbc0d; font-weight:900; line-height:1; }
+.sh-qty button[aria-disabled="true"] { opacity:.35; cursor:not-allowed; }
+.sh-qty output { min-width:1.4em; text-align:center; font-weight:800; }
+.vn-sheet > footer { display:flex; align-items:center; gap:10px; padding:8px 14px; background:#fff; border-top:1px solid #ece7dc; flex-wrap:wrap; }
+.sheet-sum { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+.sheet-total { font-size:22px; }
+.sheet-quote { font-size:12px; color:#6f6b63; }
+.vn-btn { background:#ffbc0d; border:3px solid #27251f; border-radius:999px; padding:6px 20px; font-weight:800; box-shadow:0 4px 0 #27251f; }
+.vn-btn:active { transform:translateY(3px); box-shadow:0 1px 0 #27251f; }
+.vn-chip[hidden] { display:none; }
+
+.npc-toast { position:fixed; z-index:60; left:50%; top:16px; transform:translateX(-50%); background:rgba(30,18,10,.92); color:#fff; padding:8px 18px; border-radius:20px; font-size:14px; opacity:0; transition:opacity .25s; pointer-events:none; }
+.npc-toast.show { opacity:1; }
+
+/* 点单后在右侧面板上闪一下, 告诉玩家"在这里点" */
+#panel.npc-flash { animation:npcFlash .9s ease-out 2; }
+@keyframes npcFlash { 40% { box-shadow:-6px 0 24px rgba(0,0,0,.35), inset 0 0 0 5px #ffbc0d; } }
+
+@media (max-width:760px) {
+  .vn-portrait { left:-12vw; height:92vh; bottom:-8vh; opacity:.9; }
+  .vn-choices { right:3vw; }
+  .vn-plaque { right:2vw; width:74px; }
+  .vn-title { font-size:26px; }
+  .vn-sheet { left:3vw; right:calc(2vw + 74px + 10px); top:10px; }
+  .sheet-tabs { width:62px; }
+  .sheet-grid { grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .npcvn *, .npcvn, .npc-tip, #panel.npc-flash { animation:none !important; transition:none !important; }
+}

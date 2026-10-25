@@ -147,9 +147,11 @@
   </div>
 </div>
 
+<script src="/js/orders.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const KINDS = ['主料', '规格', '配料'];
+let orderPanel = null, demoMode = true;
 let sid = null, cart = {lines: [], total: 0}, pending = null, store = null;
 let selected = [];          // [{name, kind}]
 let bs = null;              // 引擎返回的状态
@@ -158,7 +160,7 @@ let seq = 0;                // 丢弃过期响应, 防止快速点击时旧结�
 async function api(path, body) {
   const r = await fetch(path, body ? {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)} : undefined);
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(typeof j.detail === 'string' ? j.detail : '请求失败');
+  if (!r.ok) throw Object.assign(new Error(typeof j.detail === 'string' ? j.detail : '请求失败'), {status:r.status});
   return j;
 }
 const yuan = n => '¥' + (Math.round(n * 100) / 100);
@@ -301,19 +303,13 @@ $('calc').onclick = async () => {
   try {
     const r = await api('/api/calc', {session_id: sid});
     pending = r.state.pending; cart = r.state.cart; renderCart();
-    say(`算好了,一共 ${yuan(pending.price)}。演示模式不会真的下单。`);
+    say(`算好了,一共 ${yuan(pending.price)}。请核对订单后确认。`);
+    orderPanel.showQuote(pending);
   } catch (e) { say(e.message); }
   $('calc').disabled = !cart.lines.length;
 };
 async function confirmOrder() {
-  const ways = pending.takeWayList || [];
-  const w = ways.length > 1 ? ways[(parseInt(prompt('取餐方式: ' + ways.map((x, i) => `${i + 1}.${x.title}`).join('  '), '1'), 10) || 0) - 1] : ways[0];
-  if (!w || !confirm(`确认下单 ${yuan(pending.price)}(${w.title})?这会用你的真实账号创建订单。`)) return;
-  try {
-    const r = await api('/api/order/confirm', {session_id: sid, take_way_code: w.code});
-    say('下单成功,请按提示完成支付。'); if (r.order && r.order.payH5Url) $('log').append(el('div', '', '支付链接:' + r.order.payH5Url));
-    cart = {lines: [], total: 0}; pending = null; renderCart();
-  } catch (e) { say('下单失败:' + e.message); }
+  if (pending) orderPanel.showQuote(pending);
 }
 
 $('pickStore').onclick = openStores;
@@ -340,13 +336,21 @@ async function chooseStore(s) {
 }
 
 (async () => {
-  sid = (await api('/api/session', {})).session_id;
+  let saved = null;
+  try { saved = sessionStorage.getItem('mcd.workshopSession'); } catch (e) {}
+  sid = (await api('/api/session', {session_id:saved})).session_id;
+  try { sessionStorage.setItem('mcd.workshopSession', sid); } catch (e) {}
   try {
     const c = await api('/api/config');
     $('demo').textContent = c.demo ? '演示模式:只算价,不会真正下单' : '⚠ 真实下单已开启:点“确认下单”会用你的账号创建订单';
     if (!c.demo) $('demo').style.background = '#ffd6d6';
-    $('confirm').onclick = c.demo ? () => say('演示模式下已关闭真实下单。') : confirmOrder;
+    demoMode = c.demo;
   } catch (e) {}
+  orderPanel = new McdOrders({api, sessionId:() => sid, demo:demoMode, onCreated:() => {
+    cart = {lines:[], total:0}; pending = null; renderCart();
+  }});
+  $('confirm').onclick = confirmOrder;
+  try { await orderPanel.restore(); } catch (e) { say(e.message); }
   say('welcome'); renderAll();
   try { bs = await api('/api/burger/state', {session_id: sid, selected: []}); renderAll(); } catch (e) {}
   openStores();

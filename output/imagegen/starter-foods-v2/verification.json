@@ -1,0 +1,112 @@
+{
+  "checks": {
+    "sheet_sizes_correct": true,
+    "exact_nearest_neighbor_4x": true,
+    "binary_alpha_only": true,
+    "exact_magenta_background": true,
+    "no_magenta_in_sprites": true,
+    "all_16_sprites_present": true,
+    "exact_dark_brown_outer_edges": true,
+    "all_sprite_sizes_and_material_palettes_correct": true,
+    "horizontal_gaps_greater_than_30_percent": true
+  },
+  "minimum_horizontal_gap_ratio": 0.3333333333333333,
+  "sprites": [
+    {
+      "id": "bun_top",
+      "width": 45,
+      "height": 23,
+      "opaque_colors": 5
+    },
+    {
+      "id": "bun_bottom",
+      "width": 43,
+      "height": 14,
+      "opaque_colors": 4
+    },
+    {
+      "id": "beef_patty",
+      "width": 43,
+      "height": 14,
+      "opaque_colors": 4
+    },
+    {
+      "id": "chicken_patty",
+      "width": 45,
+      "height": 15,
+      "opaque_colors": 4
+    },
+    {
+      "id": "cheese",
+      "width": 46,
+      "height": 11,
+      "opaque_colors": 4
+    },
+    {
+      "id": "lettuce",
+      "width": 48,
+      "height": 11,
+      "opaque_colors": 4
+    },
+    {
+      "id": "tomato",
+      "width": 41,
+      "height": 8,
+      "opaque_colors": 4
+    },
+    {
+      "id": "pickles",
+      "width": 42,
+      "height": 7,
+      "opaque_colors": 4
+    },
+    {
+      "id": "onion",
+      "width": 39,
+      "height": 11,
+      "opaque_colors": 4
+    },
+    {
+      "id": "ketchup",
+      "width": 28,
+      "height": 19,
+      "opaque_colors": 4
+    },
+    {
+      "id": "mustard",
+      "width": 28,
+      "height": 19,
+      "opaque_colors": 4
+    },
+    {
+      "id": "mayonnaise",
+      "width": 28,
+      "height": 19,
+      "opaque_colors": 4
+    },
+    {
+      "id": "beef_burger",
+      "width": 48,
+      "height": 47,
+      "opaque_colors": 29
+    },
+    {
+      "id": "chicken_burger",
+      "width": 48,
+      "height": 47,
+      "opaque_colors": 29
+    },
+    {
+      "id": "fries",
+      "width": 36,
+      "height": 47,
+      "opaque_colors": 19
+    },
+    {
+      "id": "cola",
+      "width": 29,
+      "height": 51,
+      "opaque_colors": 13
+    }
+  ]
+}
