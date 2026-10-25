@@ -4,5 +4,11 @@ __pycache__/
 .venv/
 *_raw.txt
 
+# 本机生图的密钥与中间产物
+.env.imagegen
+tmp/imagegen/
+output/imagegen/*.raw.png
+output/imagegen/*.zip
+
 # Generated scene debugging images
 /tools/_debug/

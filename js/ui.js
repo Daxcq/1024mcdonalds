@@ -86,6 +86,63 @@
     card.classList.toggle('sad', sad);
   }
 
+  /* ---------- 后端接入: 选门店 / 真实菜单 / 结算 ----------
+   * 后端不可达时 MD.API.online 为 false: 以上全部隐藏, 页面保持原来的离线演示。 */
+  const money = (n) => '¥' + (Math.round(n * 100) / 100);
+  function setSubtitle(t) { const s = $('#subtitle'); if (s) s.textContent = t; }
+  function openStores() {
+    const m = $('#storeModal'); m.style.display = 'flex';
+    const box = $('#smList'); box.textContent = '加载中…';
+    MD.API.stores().then((r) => {
+      box.textContent = '';
+      if (!r.stores.length) { box.textContent = '暂时没有可用门店'; return; }
+      r.stores.forEach((s) => {
+        const b = document.createElement('button');
+        b.className = 'btn g'; b.type = 'button'; b.style.cssText = 'display:block;width:100%;text-align:left;margin-top:6px;border-radius:12px';
+        const n = document.createElement('b'); n.textContent = s.name.replace('麦当劳', '');
+        const d = document.createElement('div'); d.style.cssText = 'font-size:12px;font-weight:400;color:#6f6b63'; d.textContent = (s.address || '') + ' · ' + (s.hours || '');
+        b.append(n, d); b.onclick = () => pickStore(s); box.appendChild(b);
+      });
+    }).catch((e) => { box.textContent = e.message; });
+  }
+  async function pickStore(s) {
+    try {
+      await MD.API.chooseStore(s);
+      $('#storeModal').style.display = 'none';
+      if (!MD.CATS.some((c) => c.id === cat)) cat = MD.CATS[0].id;
+      E.active().slice().reverse().forEach((o) => E.cancel(o));  // 换店后旧订单的商品可能已不存在
+      renderCats(); renderGrid(); renderCart();
+      setSubtitle(s.name.replace('麦当劳', '') + ' · 真实菜单');
+      toast('已切换到 ' + s.name.replace('麦当劳', ''));
+    } catch (e) {
+      // 打烊店等: 后端返回的是可直接给用户看的原因
+      const p = document.createElement('p'); p.style.cssText = 'color:#d6221a;font-size:13px;margin:6px 0'; p.textContent = e.message;
+      $('#smList').prepend(p);
+    }
+  }
+  async function doCheckout() {
+    const act = E.active();
+    if (!act.length) return;
+    const btn = $('#checkout'); btn.disabled = true;
+    try {
+      const p = await MD.API.checkout(act);
+      const off = p.discount ? '，已优惠 ' + money(p.discount) : '';
+      toast('应付 ' + money(p.price) + off + (MD.API.demo ? '（演示模式，不下单）' : ''));
+      $('#total').textContent = money(p.price);
+    } catch (e) { toast(e.message); }
+    btn.disabled = false;
+  }
+  function bindStore() {
+    const A = MD.API;
+    if (!A || !A.online) return;                       // 离线: 保持原样
+    $('#store').hidden = false; $('#checkout').hidden = false;
+    $('#store').addEventListener('click', openStores);
+    $('#smClose').addEventListener('click', () => { $('#storeModal').style.display = 'none'; });
+    $('#checkout').addEventListener('click', doCheckout);
+    setSubtitle('离线演示菜单 · 点右上角「选门店」换成真实价格');
+    openStores();
+  }
+
   function bind() {
     $('#cats').addEventListener('click', (e) => { const b = e.target.closest('.cat'); if (!b) return; cat = b.dataset.c; renderCats(); renderGrid(); });
     $('#grid').addEventListener('click', (e) => {
@@ -104,12 +161,13 @@
     });
     $('#clear').addEventListener('click', () => E.active().slice().reverse().forEach((o) => E.cancel(o)));
     $('#pick').addEventListener('click', () => { E.pickup(); toast('顾客已取餐，祝用餐愉快'); });
+    bindStore();
     document.querySelectorAll('#hud button').forEach((b) => b.addEventListener('click', () => {
       E.speed = +b.dataset.s; document.querySelectorAll('#hud button').forEach((x) => x.classList.toggle('on', x === b));
     }));
   }
 
-  MD.loadImages().then(() => {
+  Promise.all([MD.loadImages(), MD.API ? MD.API.init() : null]).then(() => {
     E = MD.engine = new MD.Engine();
     const cv = $('#cv'), c = cv.getContext('2d');
     c.imageSmoothingEnabled = true;

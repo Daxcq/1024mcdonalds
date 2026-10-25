@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>麦当劳 · 汉堡工坊</title>
+<style>
+  :root { --red:#c8102e; --dark:#8f0b20; --gold:#ffbc0d; --cream:#fff3d6; --paper:#fbe9bf; --ink:#3a2210; --ok:#2e7d32; --grey:#b9a98a; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin:0; font-family:"PingFang SC","Microsoft YaHei",sans-serif; color:var(--ink); background:#2a1a10;
+         display:grid; grid-template-columns: 320px 1fr 340px; grid-template-rows: auto 1fr; min-height:0; }
+  button { font:inherit; color:inherit; cursor:pointer; }
+  button:focus-visible, input:focus-visible { outline:3px solid #1a73e8; outline-offset:2px; }
+  .topbar { grid-column:1/-1; background:var(--red); color:var(--gold); padding:8px 16px; display:flex; align-items:center; gap:12px;
+            border-bottom:4px solid var(--dark); font-weight:800; letter-spacing:2px; }
+  .topbar .sp { flex:1; }
+  .topbar small { color:#fff; font-weight:500; letter-spacing:0; }
+  .chip { background:#fff; border:2px solid var(--ink); border-radius:999px; padding:4px 12px; font-size:13px; }
+
+  /* 左: NPC 场景 */
+  .npc { background: repeating-linear-gradient(45deg,#f1d9a6 0 24px,#ecd09a 24px 48px); border-right:5px solid var(--dark);
+         display:flex; flex-direction:column; min-height:0; }
+  .stage { padding:16px; display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .clerk { width:112px; height:128px; image-rendering:pixelated; }
+  .clerk.talk { animation: bob .5s steps(2) infinite; }
+  @keyframes bob { 50% { transform: translateY(-4px); } }
+  .bubble { position:relative; background:#fff; border:3px solid var(--ink); border-radius:10px; padding:10px 12px; line-height:1.6;
+            box-shadow:3px 3px 0 rgba(0,0,0,.25); min-height:84px; width:100%; }
+  .bubble::before { content:""; position:absolute; top:-12px; left:50%; margin-left:-10px; border:10px solid transparent; border-bottom-color:var(--ink); border-top:0; }
+  .bubble .who { font-size:12px; color:#8a6a40; margin-bottom:2px; }
+  .log { flex:1; overflow-y:auto; padding:0 16px 8px; font-size:13px; color:#6b4a2b; }
+  .log div { padding:3px 0; border-top:1px dashed #cdb27c; }
+  .talkbar { display:flex; gap:6px; padding:10px; background:var(--dark); }
+  .talkbar input { flex:1; padding:8px; border:3px solid var(--ink); border-radius:8px; font:inherit; min-width:0; }
+  .btn { background:var(--gold); border:3px solid var(--ink); border-radius:8px; padding:8px 14px; font-weight:800; box-shadow:0 4px 0 var(--ink); }
+  .btn:active:not(:disabled) { transform:translateY(3px); box-shadow:0 1px 0 var(--ink); }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  .btn.red { background:var(--red); color:#fff; }
+
+  /* 中: 拼装台 */
+  .bench { background:var(--paper); display:flex; flex-direction:column; min-height:0; }
+  .steps { display:flex; background:#f3d79b; border-bottom:3px solid #d9b46a; }
+  .step { flex:1; text-align:center; padding:8px 4px; font-weight:800; color:#9a8466; border-bottom:4px solid transparent; }
+  .step.on { color:var(--red); border-bottom-color:var(--red); background:var(--cream); }
+  .step.done { color:var(--ok); }
+  .step.done::before { content:"✓ "; }
+  .build { display:flex; gap:14px; padding:12px 14px; min-height:0; flex:1; overflow:hidden; }
+  .stack { width:150px; flex:none; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:2px;
+           background:#fff8e6; border:3px solid #e1bd75; border-radius:10px; padding:10px 6px; }
+  .layer { width:100%; padding:5px 4px; text-align:center; font-size:12px; font-weight:700; border:2px solid var(--ink); border-radius:12px 12px 6px 6px; }
+  .layer.bun { background:#e3a64a; }
+  .layer.patty { background:#8b5a3c; color:#fff; }
+  .layer.spec { background:#c98a52; color:#fff; }
+  .layer.topping { background:#8fbf5a; }
+  .layer.empty { background:transparent; border:2px dashed var(--grey); color:var(--grey); }
+  .picker { flex:1; overflow-y:auto; min-width:0; }
+  .picker h3 { margin:2px 0 8px; font-size:15px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(112px,1fr)); gap:8px; margin-bottom:14px; }
+  .ing { background:var(--cream); border:3px solid #e1bd75; border-radius:10px; padding:10px 6px; text-align:center; font-weight:700; position:relative; }
+  .ing small { display:block; font-weight:400; font-size:11px; color:#6b4a2b; margin-top:2px; }
+  .ing.sel { border-color:var(--red); background:#ffe9b0; box-shadow:0 0 0 2px var(--red) inset; }
+  .ing[aria-disabled="true"] { background:#e9e1cf; border-color:#cfc5ad; color:#9b9078; cursor:not-allowed; }
+  .ing[aria-disabled="true"] small { color:#8a7f66; }
+  .ing .why { display:none; position:absolute; z-index:2; left:50%; transform:translateX(-50%); bottom:calc(100% + 6px); width:170px; background:var(--ink); color:#fff;
+              font-weight:400; font-size:12px; padding:6px 8px; border-radius:6px; pointer-events:none; }
+  .ing:hover .why, .ing:focus-visible .why { display:block; }
+  .result { background:#fff8e6; border:3px solid var(--ok); border-radius:10px; padding:10px 12px; margin-bottom:12px; }
+  .result.near { border-color:var(--grey); }
+  .result h3 { margin:0 0 4px; color:var(--ok); }
+  .result .warn { font-size:12px; color:#9a5b00; margin-top:4px; }
+  .hint { background:#fff; border:2px dashed var(--red); border-radius:8px; padding:6px 10px; font-size:13px; margin-bottom:10px; }
+
+  /* 右: 购物车 */
+  .side { background:var(--cream); border-left:5px solid var(--dark); display:flex; flex-direction:column; min-height:0; padding:12px; gap:8px; }
+  .side h2 { margin:0; font-size:16px; color:var(--red); }
+  .side ul { list-style:none; margin:0; padding:0; flex:1; overflow-y:auto; font-size:14px; }
+  .side li { display:flex; justify-content:space-between; gap:6px; padding:5px 0; border-bottom:1px dashed #cdb27c; }
+  .total { font-size:22px; font-weight:900; color:var(--red); }
+  .quote { font-size:13px; color:#6b4a2b; min-height:18px; }
+  .demo { font-size:12px; background:#fff3cd; border:2px solid #e0b200; border-radius:6px; padding:5px 8px; }
+
+  .modal { position:fixed; inset:0; background:rgba(0,0,0,.65); display:none; align-items:center; justify-content:center; padding:16px; z-index:10; }
+  .modal.open { display:flex; }
+  .dialog { background:var(--cream); border:4px solid var(--ink); border-radius:12px; padding:16px; width:min(560px,100%); max-height:85vh; overflow-y:auto; }
+  .dialog h2 { margin:0 0 4px; color:var(--red); }
+  .store-item { width:100%; text-align:left; background:#fff; border:3px solid var(--ink); border-radius:8px; padding:8px 10px; margin-top:8px; }
+  .store-item small { display:block; color:#6b4a2b; }
+  @media (max-width: 980px) { body { grid-template-columns:1fr; grid-template-rows:auto auto 1fr auto; } .npc, .side { border:none; } .build { flex-direction:column; } .stack { width:100%; flex-direction:row; justify-content:center; flex-wrap:wrap; } }
+  @media (prefers-reduced-motion: reduce) { .clerk.talk { animation:none; } }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <span>麦当劳 · 汉堡工坊</span>
+  <small id="storeName">未选门店</small>
+  <span class="sp"></span>
+  <button class="chip" id="pickStore">选门店</button>
+</header>
+
+<section class="npc" aria-label="店员小麦">
+  <div class="stage">
+    <svg class="clerk" id="clerk" viewBox="0 0 16 18" shape-rendering="crispEdges" role="img" aria-label="戴红帽的店员小麦">
+      <rect x="4" y="1" width="8" height="3" fill="#222"/><rect x="3" y="3" width="10" height="2" fill="#222"/>
+      <rect x="6" y="2" width="4" height="2" fill="#ffbc0d"/>
+      <rect x="4" y="5" width="8" height="5" fill="#f2c8a0"/>
+      <rect x="6" y="7" width="1" height="1" fill="#222"/><rect x="9" y="7" width="1" height="1" fill="#222"/>
+      <rect x="7" y="9" width="2" height="1" fill="#b4542e"/>
+      <rect x="3" y="10" width="10" height="6" fill="#c8102e"/><rect x="6" y="11" width="4" height="2" fill="#ffbc0d"/>
+      <rect x="2" y="11" width="1" height="4" fill="#c8102e"/><rect x="13" y="11" width="1" height="4" fill="#c8102e"/>
+      <rect x="4" y="16" width="3" height="2" fill="#333"/><rect x="9" y="16" width="3" height="2" fill="#333"/>
+    </svg>
+    <div class="bubble" aria-live="polite"><div class="who">小麦</div><div id="say"></div></div>
+  </div>
+  <div class="log" id="log" aria-label="对话记录"></div>
+  <form class="talkbar" id="talk">
+    <label for="talkInput" hidden>对小麦说</label>
+    <input id="talkInput" autocomplete="off" maxlength="200" placeholder="想说点什么? 比如: 我想吃辣的" disabled>
+    <button class="btn" disabled id="talkBtn">说</button>
+  </form>
+</section>
+
+<main class="bench" aria-label="拼装台">
+  <div class="steps" id="steps"></div>
+  <div class="build">
+    <div class="stack" id="stack" aria-label="你的汉堡"></div>
+    <div class="picker" id="picker"></div>
+  </div>
+</main>
+
+<aside class="side" aria-label="购物车">
+  <h2>我的订单</h2>
+  <ul id="cartList"></ul>
+  <div class="quote" id="quote"></div>
+  <div class="total" id="total">¥0</div>
+  <div class="demo" id="demo">演示模式:只算价,不会真正下单</div>
+  <button class="btn" id="calc" disabled>算价</button>
+  <button class="btn red" id="confirm" disabled>确认下单</button>
+</aside>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="dialog">
+    <h2 id="mTitle">选一家店</h2>
+    <p id="mHint" style="margin:0 0 6px;font-size:13px;color:#6b4a2b">长春市。营业时间外的店暂时无法点单。</p>
+    <div id="storeList">加载中…</div>
+    <button class="chip" id="closeModal" style="margin-top:10px">关闭</button>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const KINDS = ['主料', '规格', '配料'];
+let sid = null, cart = {lines: [], total: 0}, pending = null, store = null;
+let selected = [];          // [{name, kind}]
+let bs = null;              // 引擎返回的状态
+let seq = 0;                // 丢弃过期响应, 防止快速点击时旧结果覆盖新结果
+
+async function api(path, body) {
+  const r = await fetch(path, body ? {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)} : undefined);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(typeof j.detail === 'string' ? j.detail : '请求失败');
+  return j;
+}
+const yuan = n => '¥' + (Math.round(n * 100) / 100);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+
+/* ---------- NPC 台词: 先用预置话术, 保证不依赖模型也能玩完 ---------- */
+const LINES = {
+  welcome: ['欢迎光临!我是小麦。先选一家店,我们来拼一个只属于你的汉堡。'],
+  pickStore: ['先告诉我你想在哪家店取餐吧。'],
+  主料: ['先挑个主料吧,牛肉、鸡肉还是鱼肉?', '汉堡的灵魂是主料,你想从哪个开始?'],
+  规格: ['主料定了。再选个规格,看看你想要怎样的口感。', '不同规格的肉排差别可大了,挑一个吧。'],
+  配料: ['到配料啦。灰色的是这个组合里用不上的。', '再加点酱和蔬菜,灰掉的那些暂时搭不上。'],
+  完成: ['成了!这就是店里的「{n}」。要加入订单吗?'],
+  差一样: ['就差一样!再加「{a}」就是「{n}」了。', '再来一点「{a}」,就能拼成「{n}」。'],
+  死路: ['这个组合店里做不出来。看看下面最接近的,或者清空重来?'],
+  加购: ['好嘞,「{n}」已经放进订单了。'],
+};
+let lineIdx = 0;
+function say(key, vars = {}) {
+  const pool = LINES[key] || [key];
+  let t = pool[(lineIdx++) % pool.length];
+  for (const k in vars) t = t.replaceAll('{' + k + '}', vars[k]);
+  $('say').textContent = t;
+  const c = $('clerk'); c.classList.add('talk'); setTimeout(() => c.classList.remove('talk'), 900);
+  const d = el('div', '', '小麦:' + t); $('log').appendChild(d); $('log').scrollTop = 1e9;
+}
+
+/* ---------- 拼装台渲染 ---------- */
+function renderSteps() {
+  const cur = bs ? bs.step : '主料';
+  const have = new Set(selected.map(i => i.kind));
+  $('steps').replaceChildren(...KINDS.map(k => {
+    const d = el('div', 'step', k);
+    if (have.has(k) && k !== cur) d.classList.add('done');
+    if (k === cur || (cur === '完成' && k === '配料')) d.classList.add('on');
+    return d;
+  }));
+}
+function renderStack() {
+  const items = [];
+  const top = el('div', 'layer bun', '面包顶'); items.push(top);
+  const byKind = k => selected.filter(i => i.kind === k);
+  byKind('配料').forEach(i => items.push(el('div', 'layer topping', i.name)));
+  byKind('规格').forEach(i => items.push(el('div', 'layer spec', i.name)));
+  byKind('主料').forEach(i => items.push(el('div', 'layer patty', i.name)));
+  if (!selected.length) items.push(el('div', 'layer empty', '选主料开始'));
+  items.push(el('div', 'layer bun', '面包底'));
+  $('stack').replaceChildren(...items);
+}
+function ingButton(o) {
+  const b = el('button', 'ing' + (o.selected ? ' sel' : ''), o.name);
+  b.type = 'button';
+  if (!o.selectable) {
+    b.setAttribute('aria-disabled', 'true');          // 保持可聚焦, 键盘/读屏用户也能听到原因
+    b.append(el('small', '', '暂不可选'), el('span', 'why', o.reason || '搭不上'));
+    b.setAttribute('aria-label', `${o.name},暂不可选:${o.reason || '搭不上'}`);
+    b.onclick = e => e.preventDefault();
+  } else {
+    if (o.selected) b.setAttribute('aria-pressed', 'true');
+    else if (o.leadsTo.length && o.leadsTo.length <= 3) b.append(el('small', '', o.leadsTo.join('、')));
+    b.onclick = () => toggle(o);
+  }
+  return b;
+}
+function renderPicker() {
+  if (!bs) { $('picker').replaceChildren(el('p', '', '请先选门店')); return; }
+  const nodes = [];
+  if (bs.exact.length) {
+    for (const r of bs.exact) {
+      const box = el('div', 'result');
+      box.append(el('h3', '', `拼成了:${r.name}`));
+      box.append(el('div', '', `${r.patty} · ${r.spec} · ${r.toppings.join('、') || '无配料'}`));
+      if (r.price != null) box.append(el('div', '', `本店价格 ${yuan(r.price)}`));
+      if (bs.unverified) box.append(el('div', 'warn', '规格信息为整理推断,尚未与官方核对'));
+      const add = el('button', 'btn', '加入订单'); add.type = 'button'; add.style.marginTop = '8px';
+      add.onclick = () => addBurger(r);
+      box.append(add); nodes.push(box);
+    }
+  } else if (selected.length && bs.reachableCount === 0 && bs.nearest.length) {
+    const box = el('div', 'result near'); box.append(el('h3', '', '最接近的是'));
+    bs.nearest.forEach(n => box.append(el('div', '', `${n.burger.name}:缺 ${n.missing.join('、') || '无'};多 ${n.extra.join('、') || '无'}`)));
+    nodes.push(box);
+  }
+  for (const h of bs.hints.slice(0, 2)) nodes.push(el('div', 'hint', `再加「${h.add.name}」就是「${h.burger}」`));
+  for (const k of KINDS) {
+    const opts = bs.options.filter(o => o.kind === k);
+    if (!opts.length) continue;
+    nodes.push(el('h3', '', k));
+    const g = el('div', 'grid'); opts.forEach(o => g.append(ingButton(o))); nodes.push(g);
+  }
+  $('picker').replaceChildren(...nodes);
+}
+function renderCart() {
+  $('cartList').replaceChildren(...cart.lines.map(l => {
+    const li = el('li'); li.append(el('span', '', `${l.name} × ${l.quantity}`), el('span', '', yuan(l.price * l.quantity))); return li;
+  }));
+  $('total').textContent = yuan(cart.total);
+  $('quote').textContent = pending ? `算价结果:应付 ${yuan(pending.price)}` + (pending.discount ? `(已优惠 ${yuan(pending.discount)})` : '') : '';
+  $('calc').disabled = !cart.lines.length;
+  $('confirm').disabled = !pending;
+}
+function renderAll() { renderSteps(); renderStack(); renderPicker(); renderCart(); }
+
+/* ---------- 交互 ---------- */
+let lastStep = null, lastHint = null;
+async function refresh() {
+  const my = ++seq;
+  const r = await api('/api/burger/state', {session_id: sid, selected});
+  if (my !== seq) return;                                   // 过期响应
+  bs = r; renderAll();
+  if (bs.exact.length) say('完成', {n: bs.exact.map(x => x.name).join('、')});
+  else if (selected.length && bs.reachableCount === 0) say('死路');
+  else if (bs.hints.length && (lastHint !== bs.hints[0].burger)) { lastHint = bs.hints[0].burger; say('差一样', {a: bs.hints[0].add.name, n: bs.hints[0].burger}); }
+  else if (bs.step !== lastStep) say(bs.step);
+  lastStep = bs.step;
+}
+async function toggle(o) {
+  const has = selected.some(i => i.name === o.name && i.kind === o.kind);
+  if (has) {
+    // 取消一个食材时, 连带去掉依赖它的更靠后步骤, 避免出现"没主料却有规格"的悬空状态
+    const idx = KINDS.indexOf(o.kind);
+    selected = selected.filter(i => !(i.name === o.name && i.kind === o.kind) && (o.kind === '配料' || KINDS.indexOf(i.kind) < idx));
+  } else {
+    // 主料/规格同一时间只能选一个
+    if (o.kind !== '配料') selected = selected.filter(i => i.kind !== o.kind && KINDS.indexOf(i.kind) < KINDS.indexOf(o.kind));
+    selected.push({name: o.name, kind: o.kind});
+  }
+  lastHint = null;
+  try { await refresh(); } catch (e) { say('刚才有点卡,再点一次试试。'); }
+}
+async function addBurger(r) {
+  try {
+    const res = await api('/api/burger/add', {session_id: sid, selected, code: r.code, quantity: 1});
+    cart = res.state.cart; pending = res.state.pending; selected = []; lastHint = null;
+    say('加购', {n: res.burger}); await refresh(); renderCart();
+  } catch (e) { say(e.message); }
+}
+$('calc').onclick = async () => {
+  $('calc').disabled = true;
+  try {
+    const r = await api('/api/calc', {session_id: sid});
+    pending = r.state.pending; cart = r.state.cart; renderCart();
+    say(`算好了,一共 ${yuan(pending.price)}。演示模式不会真的下单。`);
+  } catch (e) { say(e.message); }
+  $('calc').disabled = !cart.lines.length;
+};
+async function confirmOrder() {
+  const ways = pending.takeWayList || [];
+  const w = ways.length > 1 ? ways[(parseInt(prompt('取餐方式: ' + ways.map((x, i) => `${i + 1}.${x.title}`).join('  '), '1'), 10) || 0) - 1] : ways[0];
+  if (!w || !confirm(`确认下单 ${yuan(pending.price)}(${w.title})?这会用你的真实账号创建订单。`)) return;
+  try {
+    const r = await api('/api/order/confirm', {session_id: sid, take_way_code: w.code});
+    say('下单成功,请按提示完成支付。'); if (r.order && r.order.payH5Url) $('log').append(el('div', '', '支付链接:' + r.order.payH5Url));
+    cart = {lines: [], total: 0}; pending = null; renderCart();
+  } catch (e) { say('下单失败:' + e.message); }
+}
+
+$('pickStore').onclick = openStores;
+$('closeModal').onclick = () => $('modal').classList.remove('open');
+async function openStores() {
+  $('modal').classList.add('open');
+  const box = $('storeList');
+  try {
+    const r = await api('/api/city/stores');
+    box.replaceChildren(...r.stores.map(s => {
+      const b = el('button', 'store-item'); b.type = 'button';
+      b.append(el('strong', '', s.name.replace('麦当劳', '')), el('small', '', `${s.address || ''} · ${s.hours || ''} · 可拼 ${s.burgerCount} 款`));
+      b.onclick = () => chooseStore(s); return b;
+    }));
+  } catch (e) { box.textContent = e.message; }
+}
+async function chooseStore(s) {
+  try {
+    const r = await api('/api/store', {session_id: sid, store_code: s.storeCode});
+    store = s; cart = r.state.cart; pending = null; selected = []; lastStep = null;
+    $('storeName').textContent = s.name.replace('麦当劳', ''); $('modal').classList.remove('open');
+    await refresh();
+  } catch (e) { $('storeList').prepend(el('p', '', e.message)); }
+}
+
+(async () => {
+  sid = (await api('/api/session', {})).session_id;
+  try {
+    const c = await api('/api/config');
+    $('demo').textContent = c.demo ? '演示模式:只算价,不会真正下单' : '⚠ 真实下单已开启:点“确认下单”会用你的账号创建订单';
+    if (!c.demo) $('demo').style.background = '#ffd6d6';
+    $('confirm').onclick = c.demo ? () => say('演示模式下已关闭真实下单。') : confirmOrder;
+  } catch (e) {}
+  say('welcome'); renderAll();
+  try { bs = await api('/api/burger/state', {session_id: sid, selected: []}); renderAll(); } catch (e) {}
+  openStores();
+})();
+</script>
+</body>
+</html>

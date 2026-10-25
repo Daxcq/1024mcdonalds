@@ -116,7 +116,7 @@ body { font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif; color:v
     </div>
   </div>
   <div id="panel">
-    <div class="top"><span class="arch">M</span><div><h1>麦当劳 · 点餐<small>右边点单，左边后厨马上开做</small></h1></div></div>
+    <div class="top"><span class="arch">M</span><div><h1>麦当劳 · 点餐<small id="subtitle">右边点单，左边后厨马上开做</small></h1></div><button class="btn g" id="store" style="margin-left:auto;padding:6px 12px;font-size:12px" hidden>选门店</button></div>
     <div class="prog hide" id="prog" aria-live="polite">
       <div class="prog-h">
         <div class="prog-ic"><img id="pgImg" alt=""></div>
@@ -137,14 +137,24 @@ body { font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif; color:v
         <div class="sum">合计<b id="total">¥0</b></div>
         <button class="btn g" id="clear">全部取消</button>
         <button class="btn y" id="pick">取餐</button>
+        <button class="btn g" id="checkout" hidden>结算</button>
       </div>
     </div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
+<div id="storeModal" role="dialog" aria-modal="true" aria-labelledby="smT" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;display:none;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:16px;width:min(520px,100%);max-height:84vh;overflow:auto;padding:16px">
+    <h2 id="smT" style="font-size:18px;margin-bottom:4px">选一家长春门店</h2>
+    <p id="smHint" style="font-size:12px;color:#6f6b63;margin-bottom:8px">选好后，菜单和价格会换成这家店的真实数据。</p>
+    <div id="smList">加载中…</div>
+    <button class="btn g" id="smClose" style="margin-top:10px">先用离线演示菜单</button>
+  </div>
+</div>
 <script src="js/sprites.js"></script>
 <script src="js/data.js"></script>
 <script src="js/menu.js"></script>
+<script src="js/api.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/recipes.js"></script>
 <script src="js/render.js"></script>

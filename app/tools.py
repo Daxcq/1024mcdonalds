@@ -131,7 +131,10 @@ async def run_tool(name: str, args: dict, s: Session, mcd: McdClient) -> dict:
         meals = parse_menu(r)
         if not meals:
             s.store = None
-            return {"error": r.get("message", "该门店菜单为空")}
+            msg = r.get("message", "该门店菜单为空")
+            if "关闭" in msg or "营业时间" in msg:
+                msg = "这家店现在已打烊或不在营业时间, 换一家营业中的店, 或明天再来"
+            return {"error": msg}
         if not s.nutrition:
             s.nutrition = parse_nutrition(await mcd.call("list-nutrition-foods"))
         attach_kcal(meals, s.nutrition)
