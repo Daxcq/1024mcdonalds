@@ -81,6 +81,7 @@ def make_router(get_session, calc_price, list_stores, pick_store, clock=None) ->
             if out.get("error"):
                 tried.append({"storeCode": st["storeCode"], "name": st.get("name"), "reason": out["error"]})
                 continue
+            s.store.name = st.get("name") or s.store.name
             rep = build_menu(list(s.menu.values()))
             return {
                 "store": {k: st.get(k) for k in ("storeCode", "name", "address", "hours", "burgerCount")},

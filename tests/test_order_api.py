@@ -41,11 +41,12 @@ class FakeMcd:
         raise AssertionError(name)
 
 
-def setup():
+def setup(quote=True):
     s = Session(id="t", store=Store("X1", "测试门店"))
     s.cart.add("P1", "测试餐品", 9.0, 1)
     mcd = FakeMcd()
-    asyncio.run(run_tool("calculate_price", {}, s, mcd))
+    if quote:
+        asyncio.run(run_tool("calculate_price", {}, s, mcd))
     mcd.calls.clear()
     app = FastAPI()
     demo = [False]
@@ -207,6 +208,10 @@ class OrderApiTest(unittest.TestCase):
         o = self.create().json()["order_state"]
         self.assertEqual(o["status_text"], "99")
         self.assertFalse(o["terminal"])
+        self.m.replies["query-order"] = {"success": True, "data": {"orderId": "O1", "orderStatusName": "待支付"}}
+        self.status()
+        self.m.replies["query-order"] = {"success": True, "data": {"orderId": "O1", "orderStatus": 88}}
+        self.assertEqual(self.status().json()["order"]["status_text"], "88")
 
     def test_取消原因只允许接口提供的值(self):
         self.create()
@@ -216,7 +221,9 @@ class OrderApiTest(unittest.TestCase):
 
 class ConcurrentOrderTest(unittest.IsolatedAsyncioTestCase):
     async def test_等待创建期间拒绝并发确认且不清除后来修改的购物车(self):
-        _, s, m, _ = setup()
+        _, s, m, _ = setup(quote=False)
+        await run_tool("calculate_price", {}, s, m)
+        m.calls.clear()
         router = make_router(lambda sid: s, lambda: m, lambda: False)
         endpoint = next(r.endpoint for r in router.routes if r.path == "/api/order/confirm")
         ready, release = asyncio.Event(), asyncio.Event()
@@ -238,6 +245,52 @@ class ConcurrentOrderTest(unittest.IsolatedAsyncioTestCase):
         await first
         self.assertEqual(s.cart.lines["P1"].quantity, 2)
         self.assertEqual(sum(n == "create-order" for n, _, _ in m.calls), 1)
+
+
+    async def test_算价过程中购物车变化不生成错误报价(self):
+        _, s, m, _ = setup(quote=False)
+        entered, release = asyncio.Event(), asyncio.Event()
+
+        async def wait(name):
+            if name == "calculate-price":
+                entered.set()
+                await release.wait()
+
+        m.hook = wait
+        task = asyncio.create_task(run_tool("calculate_price", {}, s, m))
+        await entered.wait()
+        s.cart.set_quantity("P1", 2)
+        release.set()
+        self.assertIn("error", await task)
+        self.assertIsNone(s.pending_order)
+
+
+class SessionResumeTest(unittest.TestCase):
+    def test_刷新时恢复同一会话的订单(self):
+        from unittest.mock import patch
+        from app import server
+        from app.session_store import SessionStore
+        with patch.object(server, "sessions", SessionStore()):
+            client = TestClient(server.app)
+            sid = client.post("/api/session", json={}).json()["session_id"]
+            server.sessions.get(sid).order = {"id": "O1"}
+            resumed = client.post("/api/session", json={"session_id": sid}).json()["session_id"]
+            self.assertEqual(resumed, sid)
+            self.assertEqual(client.get("/api/order", params={"session_id": resumed}).json()["order"]["id"], "O1")
+
+    def test_过期会话恢复时创建新会话(self):
+        from unittest.mock import patch
+        from app import server
+        from app.session_store import SessionStore
+        clock = [0]
+        store = SessionStore(ttl=10, clock=lambda: clock[0])
+        with patch.object(server, "sessions", store):
+            client = TestClient(server.app)
+            sid = client.post("/api/session", json={}).json()["session_id"]
+            clock[0] = 11
+            resumed = client.post("/api/session", json={"session_id": sid}).json()["session_id"]
+            self.assertNotEqual(resumed, sid)
+            self.assertIsNone(store.get(sid))
 
 
 if __name__ == "__main__":

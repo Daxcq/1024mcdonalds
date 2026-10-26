@@ -4,151 +4,110 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>麦当劳 · 汉堡工坊</title>
-<style>
-  :root { --red:#c8102e; --dark:#8f0b20; --gold:#ffbc0d; --cream:#fff3d6; --paper:#fbe9bf; --ink:#3a2210; --ok:#2e7d32; --grey:#b9a98a; }
-  * { box-sizing: border-box; }
-  html, body { height: 100%; }
-  body { margin:0; font-family:"PingFang SC","Microsoft YaHei",sans-serif; color:var(--ink); background:#2a1a10;
-         display:grid; grid-template-columns: 320px 1fr 340px; grid-template-rows: auto 1fr; min-height:0; }
-  button { font:inherit; color:inherit; cursor:pointer; }
-  button:focus-visible, input:focus-visible { outline:3px solid #1a73e8; outline-offset:2px; }
-  .topbar { grid-column:1/-1; background:var(--red); color:var(--gold); padding:8px 16px; display:flex; align-items:center; gap:12px;
-            border-bottom:4px solid var(--dark); font-weight:800; letter-spacing:2px; }
-  .topbar .sp { flex:1; }
-  .topbar small { color:#fff; font-weight:500; letter-spacing:0; }
-  .chip { background:#fff; border:2px solid var(--ink); border-radius:999px; padding:4px 12px; font-size:13px; }
-
-  /* 左: NPC 场景 */
-  .npc { background: repeating-linear-gradient(45deg,#f1d9a6 0 24px,#ecd09a 24px 48px); border-right:5px solid var(--dark);
-         display:flex; flex-direction:column; min-height:0; }
-  .stage { padding:16px; display:flex; flex-direction:column; align-items:center; gap:10px; }
-  .clerk { width:112px; height:128px; image-rendering:pixelated; }
-  .clerk.talk { animation: bob .5s steps(2) infinite; }
-  @keyframes bob { 50% { transform: translateY(-4px); } }
-  .bubble { position:relative; background:#fff; border:3px solid var(--ink); border-radius:10px; padding:10px 12px; line-height:1.6;
-            box-shadow:3px 3px 0 rgba(0,0,0,.25); min-height:84px; width:100%; }
-  .bubble::before { content:""; position:absolute; top:-12px; left:50%; margin-left:-10px; border:10px solid transparent; border-bottom-color:var(--ink); border-top:0; }
-  .bubble .who { font-size:12px; color:#8a6a40; margin-bottom:2px; }
-  .log { flex:1; overflow-y:auto; padding:0 16px 8px; font-size:13px; color:#6b4a2b; }
-  .log div { padding:3px 0; border-top:1px dashed #cdb27c; }
-  .talkbar { display:flex; gap:6px; padding:10px; background:var(--dark); }
-  .talkbar input { flex:1; padding:8px; border:3px solid var(--ink); border-radius:8px; font:inherit; min-width:0; }
-  .btn { background:var(--gold); border:3px solid var(--ink); border-radius:8px; padding:8px 14px; font-weight:800; box-shadow:0 4px 0 var(--ink); }
-  .btn:active:not(:disabled) { transform:translateY(3px); box-shadow:0 1px 0 var(--ink); }
-  .btn:disabled { opacity:.5; cursor:not-allowed; }
-  .btn.red { background:var(--red); color:#fff; }
-
-  /* 中: 拼装台 */
-  .bench { background:var(--paper); display:flex; flex-direction:column; min-height:0; }
-  .steps { display:flex; background:#f3d79b; border-bottom:3px solid #d9b46a; }
-  .step { flex:1; text-align:center; padding:8px 4px; font-weight:800; color:#9a8466; border-bottom:4px solid transparent; }
-  .step.on { color:var(--red); border-bottom-color:var(--red); background:var(--cream); }
-  .step.done { color:var(--ok); }
-  .step.done::before { content:"✓ "; }
-  .build { display:flex; gap:14px; padding:12px 14px; min-height:0; flex:1; overflow:hidden; }
-  .stack { width:150px; flex:none; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:2px;
-           background:#fff8e6; border:3px solid #e1bd75; border-radius:10px; padding:10px 6px; }
-  .layer { width:100%; padding:5px 4px; text-align:center; font-size:12px; font-weight:700; border:2px solid var(--ink); border-radius:12px 12px 6px 6px; }
-  .layer.bun { background:#e3a64a; }
-  .layer.patty { background:#8b5a3c; color:#fff; }
-  .layer.spec { background:#c98a52; color:#fff; }
-  .layer.topping { background:#8fbf5a; }
-  .layer.empty { background:transparent; border:2px dashed var(--grey); color:var(--grey); }
-  .picker { flex:1; overflow-y:auto; min-width:0; }
-  .picker h3 { margin:2px 0 8px; font-size:15px; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(112px,1fr)); gap:8px; margin-bottom:14px; }
-  .ing { background:var(--cream); border:3px solid #e1bd75; border-radius:10px; padding:10px 6px; text-align:center; font-weight:700; position:relative; }
-  .ing small { display:block; font-weight:400; font-size:11px; color:#6b4a2b; margin-top:2px; }
-  .ing.sel { border-color:var(--red); background:#ffe9b0; box-shadow:0 0 0 2px var(--red) inset; }
-  .ing[aria-disabled="true"] { background:#e9e1cf; border-color:#cfc5ad; color:#9b9078; cursor:not-allowed; }
-  .ing[aria-disabled="true"] small { color:#8a7f66; }
-  .ing .why { display:none; position:absolute; z-index:2; left:50%; transform:translateX(-50%); bottom:calc(100% + 6px); width:170px; background:var(--ink); color:#fff;
-              font-weight:400; font-size:12px; padding:6px 8px; border-radius:6px; pointer-events:none; }
-  .ing:hover .why, .ing:focus-visible .why { display:block; }
-  .result { background:#fff8e6; border:3px solid var(--ok); border-radius:10px; padding:10px 12px; margin-bottom:12px; }
-  .result.near { border-color:var(--grey); }
-  .result h3 { margin:0 0 4px; color:var(--ok); }
-  .result .warn { font-size:12px; color:#9a5b00; margin-top:4px; }
-  .hint { background:#fff; border:2px dashed var(--red); border-radius:8px; padding:6px 10px; font-size:13px; margin-bottom:10px; }
-
-  /* 右: 购物车 */
-  .side { background:var(--cream); border-left:5px solid var(--dark); display:flex; flex-direction:column; min-height:0; padding:12px; gap:8px; }
-  .side h2 { margin:0; font-size:16px; color:var(--red); }
-  .side ul { list-style:none; margin:0; padding:0; flex:1; overflow-y:auto; font-size:14px; }
-  .side li { display:flex; justify-content:space-between; gap:6px; padding:5px 0; border-bottom:1px dashed #cdb27c; }
-  .total { font-size:22px; font-weight:900; color:var(--red); }
-  .quote { font-size:13px; color:#6b4a2b; min-height:18px; }
-  .demo { font-size:12px; background:#fff3cd; border:2px solid #e0b200; border-radius:6px; padding:5px 8px; }
-
-  .modal { position:fixed; inset:0; background:rgba(0,0,0,.65); display:none; align-items:center; justify-content:center; padding:16px; z-index:10; }
-  .modal.open { display:flex; }
-  .dialog { background:var(--cream); border:4px solid var(--ink); border-radius:12px; padding:16px; width:min(560px,100%); max-height:85vh; overflow-y:auto; }
-  .dialog h2 { margin:0 0 4px; color:var(--red); }
-  .store-item { width:100%; text-align:left; background:#fff; border:3px solid var(--ink); border-radius:8px; padding:8px 10px; margin-top:8px; }
-  .store-item small { display:block; color:#6b4a2b; }
-  @media (max-width: 980px) { body { grid-template-columns:1fr; grid-template-rows:auto auto 1fr auto; } .npc, .side { border:none; } .build { flex-direction:column; } .stack { width:100%; flex-direction:row; justify-content:center; flex-wrap:wrap; } }
-  @media (prefers-reduced-motion: reduce) { .clerk.talk { animation:none; } }
-</style>
+<link rel="stylesheet" href="/assets/workshop/workshop.css">
 </head>
 <body>
-<header class="topbar">
-  <span>麦当劳 · 汉堡工坊</span>
-  <small id="storeName">未选门店</small>
-  <span class="sp"></span>
-  <button class="chip" id="pickStore">选门店</button>
-</header>
+<div class="workshop">
+  <div class="kitchen-backdrop" aria-hidden="true"></div>
+  <div class="countertop" aria-hidden="true"></div>
+  <img class="supply-trays" src="/assets/workshop/ingredient-trays.webp" alt="" aria-hidden="true">
+  <header class="topbar">
+    <a class="back-link" href="/">← 返回点餐首页</a>
+    <div class="brand"><span class="brand-mark" aria-hidden="true">M</span><div><h1>汉堡工坊</h1><small>MY LITTLE KITCHEN</small></div></div>
+    <span class="sp"></span>
+    <span class="store-label"><span class="store-dot" aria-hidden="true"></span><span id="storeName">还没选门店</span></span>
+    <button class="chip" id="pickStore" type="button">选择门店</button>
+  </header>
 
-<section class="npc" aria-label="店员小麦">
-  <div class="stage">
-    <svg class="clerk" id="clerk" viewBox="0 0 16 18" shape-rendering="crispEdges" role="img" aria-label="戴红帽的店员小麦">
-      <rect x="4" y="1" width="8" height="3" fill="#222"/><rect x="3" y="3" width="10" height="2" fill="#222"/>
-      <rect x="6" y="2" width="4" height="2" fill="#ffbc0d"/>
-      <rect x="4" y="5" width="8" height="5" fill="#f2c8a0"/>
-      <rect x="6" y="7" width="1" height="1" fill="#222"/><rect x="9" y="7" width="1" height="1" fill="#222"/>
-      <rect x="7" y="9" width="2" height="1" fill="#b4542e"/>
-      <rect x="3" y="10" width="10" height="6" fill="#c8102e"/><rect x="6" y="11" width="4" height="2" fill="#ffbc0d"/>
-      <rect x="2" y="11" width="1" height="4" fill="#c8102e"/><rect x="13" y="11" width="1" height="4" fill="#c8102e"/>
-      <rect x="4" y="16" width="3" height="2" fill="#333"/><rect x="9" y="16" width="3" height="2" fill="#333"/>
-    </svg>
-    <div class="bubble" aria-live="polite"><div class="who">小麦</div><div id="say"></div></div>
-  </div>
-  <div class="log" id="log" aria-label="对话记录"></div>
-  <form class="talkbar" id="talk">
-    <label for="talkInput" hidden>对小麦说</label>
-    <input id="talkInput" autocomplete="off" maxlength="200" placeholder="想说点什么? 比如: 我想吃辣的" disabled>
-    <button class="btn" disabled id="talkBtn">说</button>
-  </form>
-</section>
+  <section class="npc" aria-label="店员小麦">
+    <div class="eyebrow">后厨工作台 <span> / </span> 第一人称</div>
+    <h2>好味道，<br>亲手叠出来。</h2>
+    <div class="assistant"><img class="clerk" id="clerk" src="/assets/sprites/worker.png" alt="店员小麦"><div class="bubble" aria-live="polite"><span class="who">小麦 · 工坊助手</span><p id="say">先选一家门店，开始今天的汉堡制作。</p></div></div>
+    <div class="log" id="log" aria-label="对话记录" hidden></div>
+  </section>
 
-<main class="bench" aria-label="拼装台">
-  <div class="steps" id="steps"></div>
-  <div class="build">
-    <div class="stack" id="stack" aria-label="你的汉堡"></div>
-    <div class="picker" id="picker"></div>
-  </div>
-</main>
+  <main class="bench" aria-label="汉堡拼装台">
+    <div class="scene-assembly">
+      <div class="board-cal-hud" id="boardCalHud" aria-live="polite">
+        <span>当前热量</span>
+        <strong id="boardKcal">75 kcal</strong>
+        <span class="board-cal-tag level-light" id="boardCalTag">轻盈基底</span>
+      </div>
+      <div class="cal-floats" id="calFloats" aria-hidden="true"></div>
+      <div class="board"><span class="board-mark" aria-hidden="true">MADE WITH LOVE</span><div class="stack" id="stack" role="img" aria-label="你的汉堡：面包底"></div></div>
+      <img class="hand hand-left" src="/assets/workshop/hand-left.png" alt="" aria-hidden="true">
+      <img class="hand hand-right" src="/assets/workshop/hand-right.png" alt="" aria-hidden="true">
+      <div class="assembly-caption"><span class="caption-dot" aria-hidden="true"></span><span id="assemblyHint">从一块面包开始，做出你的拿手汉堡</span></div>
+    </div>
+    <section class="ingredient-panel" aria-label="备料台">
+      <div class="panel-head"><div><span class="eyebrow">FRESH INGREDIENTS</span><h2>你的备料台</h2></div><span id="selectedCount" class="count-badge">0 种已选</span></div>
+      <div class="steps" id="steps" aria-label="制作步骤"></div>
+      <div class="picker" id="picker"></div>
+      <div class="tools"><span>点击食材放上砧板，再点一次取下</span><button id="resetBurger" type="button" disabled>重新制作</button></div>
+    </section>
+  </main>
 
-<aside class="side" aria-label="购物车">
-  <h2>我的订单</h2>
-  <ul id="cartList"></ul>
-  <div class="quote" id="quote"></div>
-  <div class="total" id="total">¥0</div>
-  <div class="demo" id="demo">演示模式:只算价,不会真正下单</div>
-  <button class="btn" id="calc" disabled>算价</button>
-  <button class="btn red" id="confirm" disabled>确认下单</button>
-</aside>
+  <aside class="receipt" aria-label="配方与餐盘">
+    <section class="recipe-panel" aria-label="当前配方">
+      <div class="receipt-title"><span class="eyebrow">YOUR RECIPE</span><span class="ticket-no">NO. 001</span></div>
+      <h2>一份，刚刚好。</h2><p class="recipe-intro">选出喜欢的搭配，实时查看热量与三大营养素。</p>
 
-<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
-  <div class="dialog">
-    <h2 id="mTitle">选一家店</h2>
-    <p id="mHint" style="margin:0 0 6px;font-size:13px;color:#6b4a2b">长春市。营业时间外的店暂时无法点单。</p>
-    <div id="storeList">加载中…</div>
-    <button class="chip" id="closeModal" style="margin-top:10px">关闭</button>
-  </div>
+      <div class="nutri-card" id="nutriCard" aria-label="营养仪表盘">
+        <div class="nutri-top">
+          <div class="nutri-kcal-wrap">
+            <span class="nutri-kcal-val" id="nutriKcal">75</span>
+            <span class="nutri-kcal-unit">kcal</span>
+          </div>
+          <span class="nutri-badge level-light" id="nutriBadge">轻盈基底</span>
+        </div>
+        <div class="nutri-sub" id="nutriSub">含面包底 75 kcal · 逐层累加</div>
+        <div class="nutri-meter" aria-hidden="true"><div class="nutri-meter-fill" id="nutriMeterFill"></div></div>
+        <div class="nutri-macros">
+          <div class="macro-item protein">
+            <span class="macro-label">蛋白质</span>
+            <span class="macro-val" id="nutriProtein">2.5g</span>
+            <div class="macro-bar"><i id="barProtein" style="width:7%"></i></div>
+          </div>
+          <div class="macro-item fat">
+            <span class="macro-label">脂肪</span>
+            <span class="macro-val" id="nutriFat">1.0g</span>
+            <div class="macro-bar"><i id="barFat" style="width:4%"></i></div>
+          </div>
+          <div class="macro-item carb">
+            <span class="macro-label">碳水</span>
+            <span class="macro-val" id="nutriCarb">14.0g</span>
+            <div class="macro-bar"><i id="barCarb" style="width:25%"></i></div>
+          </div>
+        </div>
+        <p class="nutri-tip" id="nutriTip">挑选主料与配料，实时查看热量与营养变化</p>
+      </div>
+
+      <ul class="recipe-parts" id="recipeParts"></ul>
+      <div id="recipeResult" aria-live="polite"></div>
+    </section>
+    <section class="side" aria-label="购物车">
+      <div class="cart-heading"><h2>我的餐盘</h2><span id="cartCount">0 份</span></div>
+      <ul id="cartList"></ul>
+      <div class="quote" id="quote"></div>
+      <div class="total-row"><span>预估合计</span><strong id="total">¥0</strong></div>
+      <p class="demo" id="demo">正在读取下单设置…</p>
+      <div class="checkout-actions"><button class="btn" id="calc" type="button" disabled>结算餐盘</button><button class="btn secondary" id="confirm" type="button" disabled>确认下单</button></div>
+    </section>
+    <div class="ticket-footer">每一层，都有你的心意。</div>
+  </aside>
 </div>
 
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="dialog"><div class="modal-heading"><div><span class="eyebrow">CHOOSE YOUR KITCHEN</span><h2 id="mTitle">选一家门店，开始制作</h2></div><button class="chip" id="closeModal" type="button" aria-label="关闭选店弹窗">关闭</button></div>
+    <p id="mHint">菜单和可用配方会跟随门店更新。</p><div id="storeList">正在查找门店…</div>
+    <a class="modal-back" href="/">← 返回点餐首页</a>
+  </div>
+</div>
 <script src="/js/orders.js"></script>
 <script>
+/* 分享链接的 ?sharecode= 必须带到下一页: 网关按它判断访问权限, 丢了就是"链接不完整" 403 */
+document.querySelectorAll('a[href="/"]').forEach((a) => { a.search = location.search; });
+
 const $ = id => document.getElementById(id);
 const KINDS = ['主料', '规格', '配料'];
 let orderPanel = null, demoMode = true;
@@ -157,8 +116,22 @@ let selected = [];          // [{name, kind}]
 let bs = null;              // 引擎返回的状态
 let seq = 0;                // 丢弃过期响应, 防止快速点击时旧结果覆盖新结果
 
+/* 访问口令: 与主页面共用同一个 localStorage 键, 任一处输入过一次两边都通。 */
+const KEY_STORE = 'mcd.accessKey';
+const accessKey = () => { try { return localStorage.getItem(KEY_STORE) || ''; } catch (e) { return ''; } };
+
 async function api(path, body) {
-  const r = await fetch(path, body ? {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)} : undefined);
+  let r = null;
+  for (let i = 0; i < 2; i++) {
+    const headers = {'X-Access-Key': accessKey()};
+    if (body) headers['Content-Type'] = 'application/json';
+    r = await fetch(path, {method: body ? 'POST' : 'GET', headers, body: body ? JSON.stringify(body) : undefined});
+    if (r.status !== 401 || i > 0) break;
+    let k = '';
+    try { k = (window.prompt('请输入访问口令') || '').trim(); } catch (e) { k = ''; }
+    if (!k) break;
+    try { localStorage.setItem(KEY_STORE, k); } catch (e) {}
+  }
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw Object.assign(new Error(typeof j.detail === 'string' ? j.detail : '请求失败'), {status:r.status});
   return j;
@@ -166,15 +139,117 @@ async function api(path, body) {
 const yuan = n => '¥' + (Math.round(n * 100) / 100);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
+/* ---------- 食材营养兜底表(与后端 app/burger/recipes.py 保持一致) ---------- */
+const LOCAL_NUTRI = {
+  '面包底': {kcal:75, protein:2.5, fat:1.0, carb:14.0},
+  '面包顶': {kcal:85, protein:2.8, fat:1.5, carb:15.5},
+  '牛肉': {kcal:110, protein:9.0, fat:8.0, carb:0.5},
+  '鸡肉': {kcal:115, protein:9.5, fat:6.5, carb:4.5},
+  '鱼肉': {kcal:110, protein:8.0, fat:5.5, carb:7.0},
+  '双层牛肉': {kcal:110, protein:9.0, fat:8.0, carb:0.5},
+  '厚牛排': {kcal:95, protein:8.5, fat:7.0, carb:0.5},
+  '鸡肉饼': {kcal:35, protein:2.5, fat:2.0, carb:2.0},
+  '鸡腿排': {kcal:65, protein:5.5, fat:4.0, carb:2.0},
+  '芝士棒鸡腿排': {kcal:130, protein:8.5, fat:8.5, carb:5.5},
+  '单片鱼排': {kcal:25, protein:1.5, fat:1.5, carb:1.5},
+  '双层鱼排': {kcal:135, protein:9.5, fat:7.0, carb:8.5},
+  '吉士': {kcal:50, protein:3.0, fat:4.0, carb:0.5},
+  '高达干酪片': {kcal:55, protein:3.5, fat:4.5, carb:0.5},
+  '培根': {kcal:45, protein:3.2, fat:3.5, carb:0.2},
+  '生菜': {kcal:5, protein:0.3, fat:0.0, carb:1.0},
+  '番茄片': {kcal:6, protein:0.3, fat:0.0, carb:1.3},
+  '酸黄瓜': {kcal:4, protein:0.1, fat:0.0, carb:0.8},
+  '洋葱粒': {kcal:6, protein:0.2, fat:0.0, carb:1.4},
+  '巨无霸酱': {kcal:110, protein:1.5, fat:9.5, carb:5.0},
+  '麦香鸡酱': {kcal:80, protein:0.2, fat:8.5, carb:1.0},
+  '麦香鱼酱': {kcal:75, protein:0.2, fat:8.0, carb:1.2},
+  '番茄酱': {kcal:20, protein:0.2, fat:0.0, carb:4.8},
+  '芥末酱': {kcal:10, protein:0.2, fat:0.4, carb:1.2},
+  '芥末沙拉酱': {kcal:65, protein:0.3, fat:6.8, carb:1.2},
+  '烤味酱': {kcal:35, protein:0.3, fat:1.5, carb:5.0},
+  '烤牛肉风味酱': {kcal:40, protein:0.4, fat:2.5, carb:4.0},
+  '辣椒黄油风味酱': {kcal:70, protein:0.2, fat:7.2, carb:1.2},
+  '醇香芝士风味酱': {kcal:55, protein:1.2, fat:5.0, carb:1.5},
+  '黄油': {kcal:35, protein:0.1, fat:3.8, carb:0.0},
+};
+const ingNutri = name => LOCAL_NUTRI[name] || {kcal:25, protein:0.5, fat:1.5, carb:2.0};
+function calcLocalNutrition() {
+  if (bs && bs.nutrition) return bs.nutrition;
+  const hasTop = !!(bs && bs.exact && bs.exact.length);
+  const base = ingNutri('面包底'), top = hasTop ? ingNutri('面包顶') : {kcal:0, protein:0, fat:0, carb:0};
+  let kcal = base.kcal + top.kcal, protein = base.protein + top.protein, fat = base.fat + top.fat, carb = base.carb + top.carb;
+  for (const i of selected) {
+    const n = ingNutri(i.name);
+    kcal += n.kcal; protein += n.protein; fat += n.fat; carb += n.carb;
+  }
+  let level = 'light', label = '轻盈基底', tip = '挑选主料与配料，实时查看热量与营养变化';
+  if (hasTop || kcal >= 180) {
+    if (kcal < 400) { level = 'light'; label = '轻盈低负担'; tip = '清爽不腻，控卡期的友好之选'; }
+    else if (kcal < 500) { level = 'balanced'; label = '均衡能量'; tip = '优质蛋白与碳水均衡搭配，活力满满'; }
+    else if (kcal < 545) { level = 'hearty'; label = '扎实满足'; tip = '肉感十足，饱腹感强，适合正餐充能'; }
+    else { level = 'indulgent'; label = '热量炸弹'; tip = '双倍快乐大满足，建议搭配无糖茶饮或美式'; }
+  }
+  return {kcal, protein:Math.round(protein*10)/10, fat:Math.round(fat*10)/10, carb:Math.round(carb*10)/10, baseBunKcal:base.kcal, topBunKcal:top.kcal, hasTopBun:hasTop, level, label, tip};
+}
+
+let shownKcal = 75, kcalAnim = null;
+function animateKcalTo(target) {
+  if (kcalAnim) cancelAnimationFrame(kcalAnim);
+  const start = shownKcal, diff = target - start;
+  if (!diff) {
+    $('nutriKcal').textContent = target;
+    $('boardKcal').textContent = target + ' kcal';
+    return;
+  }
+  const t0 = performance.now(), dur = 280;
+  const step = now => {
+    const p = Math.min(1, (now - t0) / dur);
+    const ease = 1 - Math.pow(1 - p, 3);
+    shownKcal = Math.round(start + diff * ease);
+    $('nutriKcal').textContent = shownKcal;
+    $('boardKcal').textContent = shownKcal + ' kcal';
+    if (p < 1) kcalAnim = requestAnimationFrame(step);
+  };
+  kcalAnim = requestAnimationFrame(step);
+  const hud = $('boardCalHud');
+  hud.classList.remove('pulse'); void hud.offsetWidth; hud.classList.add('pulse');
+}
+function spawnCalFloat(text, isMinus = false) {
+  const host = $('calFloats'); if (!host) return;
+  const b = el('div', 'cal-float' + (isMinus ? ' minus' : ''), text);
+  host.appendChild(b);
+  setTimeout(() => b.remove(), 1200);
+}
+function renderNutrition() {
+  const nut = calcLocalNutrition();
+  animateKcalTo(nut.kcal);
+  const cls = 'level-' + (nut.level || 'light');
+  $('nutriBadge').className = 'nutri-badge ' + cls;
+  $('nutriBadge').textContent = nut.label;
+  $('boardCalTag').className = 'board-cal-tag ' + cls;
+  $('boardCalTag').textContent = nut.label;
+  $('nutriSub').textContent = nut.hasTopBun
+    ? `含面包底 ${nut.baseBunKcal} + 面包顶 ${nut.topBunKcal} kcal · 配方已封顶`
+    : `含面包底 ${nut.baseBunKcal} kcal · 已叠 ${selected.length} 项食材`;
+  $('nutriMeterFill').style.width = Math.min(100, Math.max(8, Math.round((nut.kcal / 620) * 100))) + '%';
+  $('nutriProtein').textContent = nut.protein.toFixed(1) + 'g';
+  $('nutriFat').textContent = nut.fat.toFixed(1) + 'g';
+  $('nutriCarb').textContent = nut.carb.toFixed(1) + 'g';
+  $('barProtein').style.width = Math.min(100, Math.round((nut.protein / 36) * 100)) + '%';
+  $('barFat').style.width = Math.min(100, Math.round((nut.fat / 34) * 100)) + '%';
+  $('barCarb').style.width = Math.min(100, Math.round((nut.carb / 56) * 100)) + '%';
+  $('nutriTip').textContent = nut.tip;
+}
+
 /* ---------- NPC 台词: 先用预置话术, 保证不依赖模型也能玩完 ---------- */
 const LINES = {
-  welcome: ['欢迎光临!我是小麦。先选一家店,我们来拼一个只属于你的汉堡。'],
+  welcome: ['欢迎来到我的后厨！先选一家门店，一起做只热乎乎的汉堡。'],
   pickStore: ['先告诉我你想在哪家店取餐吧。'],
   主料: ['先挑个主料吧,牛肉、鸡肉还是鱼肉?', '汉堡的灵魂是主料,你想从哪个开始?'],
-  规格: ['主料定了。再选个规格,看看你想要怎样的口感。', '不同规格的肉排差别可大了,挑一个吧。'],
-  配料: ['到配料啦。灰色的是这个组合里用不上的。', '再加点酱和蔬菜,灰掉的那些暂时搭不上。'],
-  完成: ['成了!这就是店里的「{n}」。要加入订单吗?'],
-  差一样: ['就差一样!再加「{a}」就是「{n}」了。', '再来一点「{a}」,就能拼成「{n}」。'],
+  规格: ['主料定了。再选个规格,看看你想要怎样的口感。', '不同规格的肉排热量和蛋白质也不同,挑一个吧。'],
+  配料: ['到配料啦。生菜和酸黄瓜清爽低卡,芝士和酱汁风味浓郁!', '再加点酱和蔬菜,灰掉的那些暂时搭不上。'],
+  完成: ['成了!这就是店里的「{n}」（约 {k} kcal · {l}）。要加入订单吗?'],
+  差一样: ['就差一样!再加「{a}」(+{ak} kcal)就是「{n}」了。', '再来一点「{a}」(+{ak} kcal),就能拼成「{n}」。'],
   死路: ['这个组合店里做不出来。看看下面最接近的,或者清空重来?'],
   加购: ['好嘞,「{n}」已经放进订单了。'],
 };
@@ -189,74 +264,147 @@ function say(key, vars = {}) {
 }
 
 /* ---------- 拼装台渲染 ---------- */
+let activeKind = '主料', lastLayers = new Set();
+const ING_ART = {
+  '牛肉':'patty_beef', '鸡肉':'patty_chicken', '鱼肉':'patty_chicken',
+  '厚牛排':'patty_beef', '双层牛肉':'patty_beef', '鸡肉饼':'patty_chicken', '鸡腿排':'patty_chicken',
+  '芝士棒鸡腿排':'patty_chicken', '单片鱼排':'patty_chicken', '双层鱼排':'patty_chicken',
+  '生菜':'lettuce', '番茄片':'tomato', '酸黄瓜':'pickle', '洋葱粒':'onion',
+  '吉士':'cheese', '高达干酪片':'cheese', '黄油':'cheese', '番茄酱':'sauce_ketchup', '芥末酱':'sauce_mustard',
+};
 function renderSteps() {
-  const cur = bs ? bs.step : '主料';
   const have = new Set(selected.map(i => i.kind));
-  $('steps').replaceChildren(...KINDS.map(k => {
-    const d = el('div', 'step', k);
-    if (have.has(k) && k !== cur) d.classList.add('done');
-    if (k === cur || (cur === '完成' && k === '配料')) d.classList.add('on');
+  $('steps').replaceChildren(...KINDS.map((k, n) => {
+    const d = el('button', 'step'); d.type = 'button';
+    d.append(el('b', '', '0' + (n + 1)), document.createTextNode(k));
+    d.classList.toggle('on', k === activeKind);
+    d.classList.toggle('done', have.has(k) && k !== activeKind);
+    d.setAttribute('aria-pressed', String(k === activeKind));
+    d.onclick = () => { activeKind = k; renderSteps(); renderPicker(); };
     return d;
   }));
 }
 function renderStack() {
-  const items = [];
-  const top = el('div', 'layer bun', '面包顶'); items.push(top);
-  const byKind = k => selected.filter(i => i.kind === k);
-  byKind('配料').forEach(i => items.push(el('div', 'layer topping', i.name)));
-  byKind('规格').forEach(i => items.push(el('div', 'layer spec', i.name)));
-  byKind('主料').forEach(i => items.push(el('div', 'layer patty', i.name)));
-  if (!selected.length) items.push(el('div', 'layer empty', '选主料开始'));
-  items.push(el('div', 'layer bun', '面包底'));
-  $('stack').replaceChildren(...items);
+  const layers = [{name:'面包底', art:'bun_bottom', key:'bottom'}];
+  const main = selected.find(i => i.kind === '主料');
+  const spec = selected.find(i => i.kind === '规格');
+  if (main) {
+    const count = spec && spec.name.includes('双层') ? 2 : 1;
+    for (let n = 0; n < count; n++) layers.push({name:main.name, art:ING_ART[main.name], key:'patty'+n, fish:main.name === '鱼肉'});
+  }
+  selected.filter(i => i.kind === '配料').forEach(i => {
+    layers.push({name:i.name, art:ING_ART[i.name], key:i.name, sauce:i.name.includes('酱'), bacon:i.name === '培根'});
+  });
+  const hasTop = !!(bs && bs.exact.length);
+  if (hasTop) layers.push({name:'面包顶', art:'bun_top', key:'top'});
+  let added = false;
+  $('stack').replaceChildren(...layers.map((layer, n) => {
+    const isNew = !lastLayers.has(layer.key) && n > 0;
+    added ||= isNew;
+    const d = layer.sauce || layer.bacon ? el('div') : el('img');
+    d.className = 'burger-layer' + (layer.sauce ? ' condiment' : '') + (layer.bacon ? ' bacon' : '')
+      + (layer.fish ? ' fish' : '') + (isNew ? ' new-layer' : '');
+    if (d.tagName === 'IMG') { d.src = '/assets/sprites/' + (layer.art || 'cheese') + '.png'; d.alt = ''; }
+    d.style.setProperty('--lift', (22 + n * 3.6) + '%');
+    d.style.zIndex = n + 1;
+    if (layer.sauce) d.style.setProperty('--sauce', layer.name.includes('番茄') ? '#bc3a20' : layer.name.includes('芥末') ? '#e7bc47' : '#e3c28b');
+    return d;
+  }));
+  const hadTop = lastLayers.has('top');
+  lastLayers = new Set(layers.map(l => l.key));
+  if (hasTop && !hadTop) spawnCalFloat(`+${ingNutri('面包顶').kcal} kcal · 盖上面包顶`);
+  $('stack').setAttribute('aria-label', '你的汉堡：' + layers.map(l => l.name).join('、'));
+  $('selectedCount').textContent = selected.length + ' 种已选';
+  $('resetBurger').disabled = !selected.length;
+  const nut = calcLocalNutrition();
+  $('assemblyHint').textContent = hasTop
+    ? `配方完成！合上面包，总计 ${nut.kcal} kcal（${nut.label}）`
+    : selected.length
+      ? `当前累计 ${nut.kcal} kcal · 继续搭配让汉堡成形`
+      : '从一块面包开始，做出你的拿手汉堡';
+
+  const partRows = [];
+  const baseRow = el('li', 'bun-row');
+  baseRow.append(el('span', '', '00'), el('span', 'part-name', '面包底（基底）'), el('span', 'part-kcal', `${ingNutri('面包底').kcal} kcal`));
+  partRows.push(baseRow);
+  if (selected.length) {
+    selected.forEach((i, n) => {
+      const li = el('li');
+      const k = (bs && bs.selected && bs.selected.find(x => x.name === i.name)?.kcal) || ingNutri(i.name).kcal;
+      li.append(el('span', '', String(n+1).padStart(2,'0')), el('span', 'part-name', i.name), el('span', 'part-kcal', `+${k} kcal`));
+      partRows.push(li);
+    });
+  } else {
+    partRows.push(el('li', 'placeholder', '还没有放入食材，先挑一份主料吧。'));
+  }
+  if (hasTop) {
+    const topRow = el('li', 'bun-row');
+    topRow.append(el('span', '', String(selected.length + 1).padStart(2,'0')), el('span', 'part-name', '面包顶（封顶）'), el('span', 'part-kcal', `+${ingNutri('面包顶').kcal} kcal`));
+    partRows.push(topRow);
+  }
+  $('recipeParts').replaceChildren(...partRows);
+  renderNutrition();
+  if (added) {
+    const scene = document.querySelector('.scene-assembly');
+    scene.classList.remove('placing'); void scene.offsetWidth; scene.classList.add('placing');
+  }
 }
 function ingButton(o) {
-  const b = el('button', 'ing' + (o.selected ? ' sel' : ''), o.name);
-  b.type = 'button';
+  const b = el('button', 'ing' + (o.selected ? ' sel' : '')); b.type = 'button';
+  if (o.name === '培根') b.append(el('span', 'ingredient-bacon'));
+  else {
+    const art = el('span', 'ingredient-art' + (o.name.includes('双层') ? ' double' : '') + (o.name.includes('鱼') ? ' fish' : ''));
+    const im = el('img'); im.src = '/assets/sprites/' + (ING_ART[o.name] || 'sauce_mayo') + '.png'; im.alt = '';
+    art.append(im); if (o.name.includes('双层')) art.append(im.cloneNode()); b.append(art);
+  }
+  const kcal = o.kcal != null ? o.kcal : ingNutri(o.name).kcal;
+  b.append(el('span', 'ing-name', o.name), el('span', 'ing-kcal', `+${kcal} kcal`));
   if (!o.selectable) {
-    b.setAttribute('aria-disabled', 'true');          // 保持可聚焦, 键盘/读屏用户也能听到原因
-    b.append(el('small', '', '暂不可选'), el('span', 'why', o.reason || '搭不上'));
-    b.setAttribute('aria-label', `${o.name},暂不可选:${o.reason || '搭不上'}`);
+    b.setAttribute('aria-disabled', 'true');
+    b.append(el('span', 'why', o.reason || '这个配方暂时用不上'));
+    b.setAttribute('aria-label', `${o.name}（+${kcal} kcal），暂不可选：${o.reason || '这个配方暂时用不上'}`);
     b.onclick = e => e.preventDefault();
   } else {
-    if (o.selected) b.setAttribute('aria-pressed', 'true');
-    else if (o.leadsTo.length && o.leadsTo.length <= 3) b.append(el('small', '', o.leadsTo.join('、')));
-    b.onclick = () => toggle(o);
+    b.setAttribute('aria-pressed', String(o.selected)); b.onclick = () => toggle(o);
   }
   return b;
 }
 function renderPicker() {
-  if (!bs) { $('picker').replaceChildren(el('p', '', '请先选门店')); return; }
-  const nodes = [];
-  if (bs.exact.length) {
+  const results = [];
+  if (bs && bs.exact.length) {
     for (const r of bs.exact) {
-      const box = el('div', 'result');
-      box.append(el('h3', '', `拼成了:${r.name}`));
-      box.append(el('div', '', `${r.patty} · ${r.spec} · ${r.toppings.join('、') || '无配料'}`));
-      if (r.price != null) box.append(el('div', '', `本店价格 ${yuan(r.price)}`));
-      if (bs.unverified) box.append(el('div', 'warn', '规格信息为整理推断,尚未与官方核对'));
-      const add = el('button', 'btn', '加入订单'); add.type = 'button'; add.style.marginTop = '8px';
-      add.onclick = () => addBurger(r);
-      box.append(add); nodes.push(box);
+      const box = el('div', 'result'); box.append(el('h3', '', r.name));
+      const rNut = r.nutrition || calcLocalNutrition();
+      box.append(el('div', 'description', `${r.patty} · ${r.spec} · ${rNut.label}`));
+      const meta = el('div', 'result-meta');
+      if (r.price != null) meta.append(el('div', 'result-price', yuan(r.price)));
+      meta.append(el('span', 'result-kcal', `🔥 ${r.kcal || rNut.kcal} kcal`));
+      box.append(meta);
+      if (bs.unverified) box.append(el('div', 'warn', '规格为整理推断，尚未与官方核对'));
+      const add = el('button', 'btn', '加入餐盘'); add.type = 'button';
+      add.onclick = () => addBurger(r); box.append(add); results.push(box);
     }
-  } else if (selected.length && bs.reachableCount === 0 && bs.nearest.length) {
-    const box = el('div', 'result near'); box.append(el('h3', '', '最接近的是'));
-    bs.nearest.forEach(n => box.append(el('div', '', `${n.burger.name}:缺 ${n.missing.join('、') || '无'};多 ${n.extra.join('、') || '无'}`)));
-    nodes.push(box);
+  } else if (bs && selected.length && bs.reachableCount === 0 && bs.nearest.length) {
+    const box = el('div', 'result near'); box.append(el('h3', '', '再调整一点点'));
+    bs.nearest.slice(0, 2).forEach(n => box.append(el('div', '', `${n.burger.name}（${n.burger.kcal || ''} kcal）：缺 ${n.missing.join('、') || '无'}；多 ${n.extra.join('、') || '无'}`)));
+    results.push(box);
   }
-  for (const h of bs.hints.slice(0, 2)) nodes.push(el('div', 'hint', `再加「${h.add.name}」就是「${h.burger}」`));
-  for (const k of KINDS) {
-    const opts = bs.options.filter(o => o.kind === k);
-    if (!opts.length) continue;
-    nodes.push(el('h3', '', k));
-    const g = el('div', 'grid'); opts.forEach(o => g.append(ingButton(o))); nodes.push(g);
+  if (bs) for (const h of bs.hints.slice(0, 2)) {
+    const ak = h.add.kcal != null ? h.add.kcal : ingNutri(h.add.name).kcal;
+    results.push(el('p', 'hint', `再加「${h.add.name}」(+${ak} kcal) 就能做成「${h.burger}」(${h.burgerKcal || ''} kcal)`));
   }
-  $('picker').replaceChildren(...nodes);
+  $('recipeResult').replaceChildren(...results);
+  if (!bs) { $('picker').replaceChildren(el('p', 'hint', '正在准备食材，请稍候…')); return; }
+  const grid = el('div', 'grid'); bs.options.filter(o => o.kind === activeKind).forEach(o => grid.append(ingButton(o)));
+  $('picker').replaceChildren(grid);
+  if (!grid.children.length) $('picker').append(el('p', 'hint', '这个步骤没有可用食材，请换个配方试试。'));
 }
 function renderCart() {
   $('cartList').replaceChildren(...cart.lines.map(l => {
     const li = el('li'); li.append(el('span', '', `${l.name} × ${l.quantity}`), el('span', '', yuan(l.price * l.quantity))); return li;
   }));
+  if (!cart.lines.length) $('cartList').append(el('li', 'empty-cart', '还没装盘，先完成你的第一只汉堡。'));
+  $('cartCount').textContent = cart.lines.reduce((n, l) => n + l.quantity, 0) + ' 份';
   $('total').textContent = yuan(cart.total);
   $('quote').textContent = pending ? `算价结果:应付 ${yuan(pending.price)}` + (pending.discount ? `(已优惠 ${yuan(pending.discount)})` : '') : '';
   $('calc').disabled = !cart.lines.length;
@@ -270,34 +418,49 @@ async function refresh() {
   const my = ++seq;
   const r = await api('/api/burger/state', {session_id: sid, selected});
   if (my !== seq) return;                                   // 过期响应
-  bs = r; renderAll();
-  if (bs.exact.length) say('完成', {n: bs.exact.map(x => x.name).join('、')});
-  else if (selected.length && bs.reachableCount === 0) say('死路');
-  else if (bs.hints.length && (lastHint !== bs.hints[0].burger)) { lastHint = bs.hints[0].burger; say('差一样', {a: bs.hints[0].add.name, n: bs.hints[0].burger}); }
-  else if (bs.step !== lastStep) say(bs.step);
+  bs = r; if (KINDS.includes(bs.step)) activeKind = bs.step; renderAll();
+  if (bs.exact.length) {
+    const nut = bs.nutrition || calcLocalNutrition();
+    say('完成', {n: bs.exact.map(x => x.name).join('、'), k: nut.kcal, l: nut.label});
+  } else if (selected.length && bs.reachableCount === 0) say('死路');
+  else if (bs.hints.length && (lastHint !== bs.hints[0].burger)) {
+    lastHint = bs.hints[0].burger;
+    const ak = bs.hints[0].add.kcal != null ? bs.hints[0].add.kcal : ingNutri(bs.hints[0].add.name).kcal;
+    say('差一样', {a: bs.hints[0].add.name, ak, n: bs.hints[0].burger});
+  } else if (bs.step !== lastStep) say(bs.step);
   lastStep = bs.step;
 }
 async function toggle(o) {
+  if (!store) { await openStores(); return; }
   const has = selected.some(i => i.name === o.name && i.kind === o.kind);
+  const kcal = o.kcal != null ? o.kcal : ingNutri(o.name).kcal;
   if (has) {
     // 取消一个食材时, 连带去掉依赖它的更靠后步骤, 避免出现"没主料却有规格"的悬空状态
     const idx = KINDS.indexOf(o.kind);
     selected = selected.filter(i => !(i.name === o.name && i.kind === o.kind) && (o.kind === '配料' || KINDS.indexOf(i.kind) < idx));
+    spawnCalFloat(`-${kcal} kcal · 取下${o.name}`, true);
   } else {
     // 主料/规格同一时间只能选一个
     if (o.kind !== '配料') selected = selected.filter(i => i.kind !== o.kind && KINDS.indexOf(i.kind) < KINDS.indexOf(o.kind));
     selected.push({name: o.name, kind: o.kind});
+    spawnCalFloat(`+${kcal} kcal · ${o.name}`);
   }
   lastHint = null;
   try { await refresh(); } catch (e) { say('刚才有点卡,再点一次试试。'); }
 }
 async function addBurger(r) {
+  if (!store) { await openStores(); return; }
   try {
     const res = await api('/api/burger/add', {session_id: sid, selected, code: r.code, quantity: 1});
     cart = res.state.cart; pending = res.state.pending; selected = []; lastHint = null;
     say('加购', {n: res.burger}); await refresh(); renderCart();
   } catch (e) { say(e.message); }
 }
+$('resetBurger').onclick = async () => {
+  selected = []; lastHint = null; activeKind = '主料';
+  spawnCalFloat('重置砧板 · 75 kcal', true);
+  try { await refresh(); } catch (e) { say(e.message); }
+};
 $('calc').onclick = async () => {
   $('calc').disabled = true;
   try {
@@ -342,8 +505,8 @@ async function chooseStore(s) {
   try { sessionStorage.setItem('mcd.workshopSession', sid); } catch (e) {}
   try {
     const c = await api('/api/config');
-    $('demo').textContent = c.demo ? '演示模式:只算价,不会真正下单' : '⚠ 真实下单已开启:点“确认下单”会用你的账号创建订单';
-    if (!c.demo) $('demo').style.background = '#ffd6d6';
+    $('demo').textContent = c.demo ? '演示模式:只算价,不会真正下单' : '真实下单已开启：确认后会创建真实订单，支付需另行完成。';
+    $('demo').classList.toggle('live', !c.demo);
     demoMode = c.demo;
   } catch (e) {}
   orderPanel = new McdOrders({api, sessionId:() => sid, demo:demoMode, onCreated:() => {
@@ -353,7 +516,6 @@ async function chooseStore(s) {
   try { await orderPanel.restore(); } catch (e) { say(e.message); }
   say('welcome'); renderAll();
   try { bs = await api('/api/burger/state', {session_id: sid, selected: []}); renderAll(); } catch (e) {}
-  openStores();
 })();
 </script>
 </body>

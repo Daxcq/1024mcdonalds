@@ -30,7 +30,7 @@
   class Engine {
     constructor() {
       this.t = 0; this.speed = 1;
-      this.timers = []; this.props = []; this.fxs = []; this.parts = [];
+      this.timers = []; this.props = []; this.fxs = []; this.parts = []; this.calPops = [];
       this.orders = []; this.jobs = []; this.seq = 0; this.cur = null;
       this.listeners = [];
       const h = MD.ST.home.stand;
@@ -50,8 +50,10 @@
     /* ---------- 订单接口（UI 调用） ---------- */
     add(pid) {
       const def = MD.P[pid];
+      const totalNutri = MD.itemNutrition ? MD.itemNutrition(def) : { kcal: 0, protein: 0, fat: 0, carb: 0, level: 'light', label: '轻盈均衡' };
       const o = { id: ++this.seq, pid, def, state: 'queued', props: [], dead: false, step: '', main: null, where: null, slot: -1,
-        steps: MD.stepsFor ? MD.stepsFor(def).labels : [], stage: -1 };
+        steps: MD.stepsFor ? MD.stepsFor(def).labels : [], stage: -1,
+        totalNutri, liveNutri: { kcal: 0, protein: 0, fat: 0, carb: 0, lastDelta: 0, lastLabel: '', stepSeq: 0 } };
       this.orders.push(o);
       this.emit();
       return o;
@@ -129,9 +131,17 @@
         q.life -= dt; q.x += q.vx * dt / 1000; q.y += q.vy * dt / 1000; q.vy += (q.g || 0) * dt / 1000;
       }
       this.parts = this.parts.filter((q) => q.life > 0);
+      // 热量飘字
+      for (const b of this.calPops) {
+        b.life -= dt; b.y += b.vy * dt / 1000;
+      }
+      this.calPops = this.calPops.filter((b) => b.life > 0);
     }
 
     /* ---------- 粒子 / 特效 ---------- */
+    calPop(x, y, text) {
+      this.calPops.push({ x, y, vy: -32, life: 1050, max: 1050, text });
+    }
     puff(x, y, color, n = 8, o = {}) {
       for (let i = 0; i < n; i++) {
         const a = Math.random() * Math.PI * 2, s = (o.speed || 60) * (0.4 + Math.random() * 0.8);
@@ -194,6 +204,7 @@
         },
         hand: (t) => MD.handPos(w, t, 1),
         puff: (...a) => E.puff(...a),
+        calPop: (...a) => E.calPop(...a),
         fxAdd: (fn) => E.fxAdd(fn), fxRm: (h) => E.fxRm(h),
         /* 把手上的成品放到出餐台 */
         async deliver(p, finalW) {
@@ -265,6 +276,7 @@
       try {
         await MD.recipes[o.def.kind](this.api(o), o, o.def);
         o.stage = o.steps.length;
+        if (o.totalNutri) o.liveNutri = Object.assign({}, o.totalNutri, { lastDelta: 0, lastLabel: '制作完成', stepSeq: (o.liveNutri ? o.liveNutri.stepSeq : 0) + 1 });
         o.state = 'done'; o.step = '已出餐';
       } catch (e) {
         if (e instanceof Abort) { this.cur = null; await this._discard(o); }

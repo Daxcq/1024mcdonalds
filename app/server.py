@@ -3,6 +3,7 @@
 ⚠ 本服务没有用户认证, 只绑定 127.0.0.1。MCP token 对应一个真实麦当劳账号,
   上线前必须加登录/会话鉴权, 否则任何能访问的人都能用这个账号下单。
 """
+import hmac
 import json
 import os
 import uuid
@@ -39,6 +40,10 @@ LLM_ENV = ("LLM_API_KEY", "LLM_BASE_URL", "LLM_MODEL")
 load_env()
 # 演示模式默认开启: 只能算价, 服务端拒绝 create-order。要真实下单必须显式设 DEMO_MODE=0
 DEMO_MODE = os.environ.get("DEMO_MODE", "1") != "0"
+# 访问口令: 留空则不校验(本地开发)。
+# 只保护有副作用或要花钱的动作, 其余接口公开 —— 一进页面就弹框太烦, 也没必要。
+ACCESS_KEY = os.environ.get("ACCESS_KEY", "").strip()
+PROTECTED = ("/api/order/confirm", "/api/order/cancel", "/api/chat")
 
 
 @asynccontextmanager
@@ -66,6 +71,21 @@ async def _no_stale_frontend(request: Request, call_next):
     if p == "/" or p.startswith(("/js/", "/api/", "/workshop", "/npc")):
         resp.headers["Cache-Control"] = "no-cache"
     return resp
+
+
+@app.middleware("http")
+async def _access_gate(request: Request, call_next):
+    """只给危险动作上口令: 创建真实订单、取消订单、AI 对话。
+
+    浏览/选店/算价/拼汉堡都不拦, 页面打开时不弹框; 口令在点"确认下单"那一刻才问一次。
+    公开链接上这三条就是唯一的门 —— 不加的话任何拿到链接的人都能用绑定账号真实下单。
+    """
+    if not ACCESS_KEY or request.url.path not in PROTECTED:
+        return await call_next(request)
+    supplied = request.headers.get("X-Access-Key") or request.query_params.get("key") or ""
+    if hmac.compare_digest(supplied, ACCESS_KEY):
+        return await call_next(request)
+    return JSONResponse(status_code=401, content={"detail": "这个操作需要访问口令, 请在弹出的输入框里输入"})
 
 
 @app.exception_handler(McdUnavailable)
@@ -188,6 +208,9 @@ async def pick_store(req: StoreReq):
     out = await run_tool("select_store", {"store_code": req.store_code}, s, mcd)
     if "error" in out:
         raise HTTPException(400, out["error"])
+    known = next((st for st in _known_stores() if st["storeCode"] == req.store_code), None)
+    if known:
+        s.store.name = known["name"]
     return {"state": s.snapshot()}
 
 

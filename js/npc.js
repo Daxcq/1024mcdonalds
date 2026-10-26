@@ -114,7 +114,7 @@
     const n = active().length;
     show(n ? `汉堡工坊是另一个场地,现在的 ${n} 份订单不会保留哦。真的要过去吗?`
            : '汉堡工坊!把面包、肉排、配料一层层拼起来,拼出店里真有的汉堡。要过去玩玩吗?', [
-      { label: '去汉堡工坊', hint: '换页面', run: () => { g.location.href = '/workshop'; } },
+      { label: '去汉堡工坊', hint: '换页面', run: () => { g.location.href = '/workshop' + g.location.search; } },
       { label: '再想想', back: true, run: () => toRoot() },
     ]);
   }

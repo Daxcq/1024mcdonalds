@@ -31,6 +31,7 @@ class KitchenMapTest(unittest.TestCase):
         self.assertEqual(why, "")
         self.assertEqual((it.id, it.kind, it.cat, it.price), ("1100", "burger", "burger", 26.0))
         self.assertIn("beef", it.params["ing"])
+        self.assertEqual(it.params["kcal"], 555)
 
     def test_价格用门店实时价而不是前端写死的价(self):
         a, _ = map_meal(meal("1100", "巨无霸", 26.0))
@@ -74,8 +75,9 @@ class KitchenMapTest(unittest.TestCase):
         rep = build_menu([meal("1100", "巨无霸", 26.0), meal("5", "可乐", 9.5)])
         for it in rep.mapped:
             d = json.loads(json.dumps(it.to_dict(), ensure_ascii=False))
-            for k in ("id", "name", "price", "cat", "kind", "sprite"):
+            for k in ("id", "name", "price", "cat", "kind", "sprite", "kcal"):
                 self.assertIn(k, d)
+            self.assertGreaterEqual(d["kcal"], 0)
             self.assertIn(it.sprite, SPRITES)
 
     def test_真实长春菜单覆盖率不低于基线(self):

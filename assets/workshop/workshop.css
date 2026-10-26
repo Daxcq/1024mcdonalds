@@ -1,0 +1,235 @@
+:root { --red:#c72721; --gold:#ffbf25; --cream:#fff8e7; --paper:#fffaf0; --ink:#442b1d; --mute:#8a7059; --line:#e7d9be; --shadow:0 12px 40px #29170935; }
+* { box-sizing:border-box; }
+body { margin:0; color:var(--ink); font:14px/1.5 "Microsoft YaHei","PingFang SC",system-ui,sans-serif; background:#4e3022; }
+button, a { -webkit-tap-highlight-color:transparent; }
+button, select { font:inherit; }
+button { cursor:pointer; color:inherit; }
+button:disabled { opacity:.45; cursor:default; }
+a { color:inherit; }
+:focus-visible { outline:3px solid #135e8b; outline-offset:4px; }
+button, a { touch-action:manipulation; }
+[hidden] { display:none !important; }
+.workshop { min-height:850px; height:100svh; max-height:1200px; position:relative; overflow:hidden; isolation:isolate; }
+.kitchen-backdrop { position:absolute; inset:0 0 35%; background:#9b4d26 url('/assets/workshop/kitchen.webp') center bottom / cover no-repeat; z-index:-4; }
+.kitchen-backdrop::after { content:""; position:absolute; inset:0; background:linear-gradient(180deg,#33160975,transparent 45%,#622f0e18); }
+.countertop { position:absolute; top:55%; bottom:0; width:100%; z-index:-3; background:linear-gradient(180deg,#e7d1aa 0,#9c8b74 3px,#e8d9be 8px,#c7b392 46%,#9d896c 100%); box-shadow:0 -10px 20px #3e261622; }
+.countertop::after { content:""; position:absolute; inset:0; opacity:.13; background:repeating-linear-gradient(0deg,transparent 0 3px,#513c29 4px,transparent 5px 9px),repeating-linear-gradient(90deg,transparent 0 104px,#fff 105px,transparent 106px 260px); }
+.supply-trays { position:absolute; left:0; top:42%; width:59%; height:24%; object-fit:cover; object-position:center; z-index:-2; mask-image:linear-gradient(180deg,#000 88%,transparent); image-rendering:pixelated; }
+.topbar { position:absolute; top:20px; left:28px; right:28px; z-index:12; display:flex; gap:20px; align-items:center; color:#fff8e7; }
+.back-link { display:inline-flex; align-items:center; min-height:44px; padding:10px 16px; border:1px solid #ffffff60; border-radius:10px; background:#3d261dd9; color:#fff8e7; font-weight:700; text-decoration:none; white-space:nowrap; }
+.back-link:hover { background:#5f3928; }
+.brand { display:flex; align-items:center; gap:12px; }
+.brand-mark { font:900 39px/1 Arial,sans-serif; color:var(--gold); transform:scaleX(1.18); }
+.brand h1 { font-size:20px; margin:0; letter-spacing:2px; }
+.brand small { font-size:9px; letter-spacing:2.4px; color:#efd6ab; }
+.sp { flex:1; }
+.store-label { display:flex; gap:8px; align-items:center; max-width:300px; font-size:12px; }
+#storeName { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.store-dot { height:7px; width:7px; flex:none; border-radius:50%; background:var(--gold); box-shadow:0 0 0 4px #ffbf2520; }
+.chip { color:var(--ink); min-height:44px; border:1px solid #e6cf9b; border-radius:9px; padding:8px 15px; background:var(--cream); font-size:13px; font-weight:700; }
+.chip:hover { background:#ffe5a0; }
+.npc { position:absolute; left:32px; top:125px; width:322px; z-index:3; color:#fff8e7; }
+.eyebrow { font-size:10px; font-weight:800; letter-spacing:2px; }
+.npc>.eyebrow { color:#ffe6b6; text-shadow:0 1px 6px #25120d; }
+.eyebrow span { opacity:.6; margin:0 6px; }
+.npc h2 { font-size:42px; line-height:1.28; letter-spacing:1px; margin:14px 0 22px; text-shadow:0 3px 20px #3e1a0d80; }
+.assistant { display:flex; gap:10px; align-items:center; border:1px solid #fff3cf5c; background:#4a2b1dda; border-radius:12px; padding:12px; box-shadow:0 8px 22px #20110918; }
+.clerk { width:42px; height:62px; object-fit:contain; image-rendering:pixelated; flex:none; }
+.bubble { min-width:0; }
+.who { font-size:10px; font-weight:700; color:#ffd36c; letter-spacing:1px; }
+.bubble p { font-size:12px; line-height:1.7; margin:5px 0 0; }
+.clerk.talk { animation:bob .35s steps(2) 2; }
+@keyframes bob { 50% { transform:translateY(-3px); } }
+.bench { position:absolute; inset:0; pointer-events:none; }
+.scene-assembly { position:absolute; left:23%; right:17%; bottom:0; height:55%; pointer-events:none; }
+.board { position:absolute; width:70%; height:62%; left:15%; bottom:13%; border:7px solid #a56b37; border-bottom:15px solid #754525; border-radius:20px 20px 28px 28px; background:repeating-linear-gradient(2deg,#c78c4e 0 2px,#d39a58 3px 14px,#dba566 15px 18px,#d09b60 19px 31px); box-shadow:0 16px 20px #39261650,inset 0 0 0 3px #f1bd77; transform:perspective(900px) rotateX(22deg) rotateZ(-3deg); }
+.board-mark { position:absolute; bottom:14px; left:0; right:0; text-align:center; font:700 10px monospace; color:#784c2e9c; letter-spacing:4px; }
+.stack { position:absolute; inset:0; transform:rotateZ(3deg); }
+.burger-layer { position:absolute; width:44%; left:28%; height:auto; bottom:var(--lift); image-rendering:pixelated; filter:drop-shadow(0 4px 1px #3c241c35); transform:scaleY(.72); transform-origin:center bottom; }
+.burger-layer.fish { filter:brightness(1.13) saturate(.72) drop-shadow(0 4px 1px #3c241c35); }
+.burger-layer.condiment { height:16%; width:39%; left:30.5%; border-radius:50%; background:var(--sauce,#e4c691); box-shadow:inset -10px -4px 0 #60371020; transform:scaleY(.6); }
+.burger-layer.bacon { height:16%; background:repeating-linear-gradient(155deg,#8a3929 0 8px,#e49b73 9px 15px,#af5138 16px 22px); border-radius:15%; transform:rotate(-10deg) scaleY(.5); }
+.burger-layer.new-layer { animation:drop-in .3s ease-out both; }
+@keyframes drop-in { from { translate:0 -35px; opacity:0; } to { translate:0 0; opacity:1; } }
+.hand { position:absolute; height:auto; image-rendering:pixelated; filter:drop-shadow(0 5px 2px #3a221c22); }
+.hand-left { left:-17%; width:65%; bottom:-6%; z-index:4; }
+.hand-right { right:-13%; width:53%; bottom:-19%; z-index:4; }
+.scene-assembly.placing .hand-right { animation:place .42s ease-in-out; }
+@keyframes place { 50% { translate:-12px -12px; rotate:-3deg; } }
+.assembly-caption { position:absolute; bottom:30px; left:20%; right:10%; display:flex; justify-content:center; align-items:center; gap:8px; font-size:11px; color:#f9eaca; text-shadow:0 1px 4px #331d18; z-index:5; }
+.caption-dot { width:6px; height:6px; border-radius:50%; background:#ffcf52; }
+.ingredient-panel { position:absolute; left:28px; bottom:28px; width:350px; z-index:8; background:linear-gradient(140deg,#fdfbf6,#f2eee5); border:1px solid #fff9e6; border-radius:16px; box-shadow:var(--shadow),inset 0 0 0 4px #d6cbb7; padding:18px; pointer-events:auto; }
+.panel-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.panel-head .eyebrow { font-size:8px; color:var(--mute); }
+.panel-head h2 { font-size:19px; margin:3px 0 0; }
+.count-badge { border:1px solid #decda7; border-radius:6px; padding:4px 7px; color:#7e6243; background:#eee5d4; font-size:10px; }
+.steps { display:flex; border-bottom:1px solid #dacdb6; margin-bottom:12px; }
+.step { background:none; border:0; border-bottom:3px solid transparent; min-height:44px; flex:1; color:#8c7864; font-size:12px; padding:8px 3px; }
+.step b { font:11px monospace; margin-right:5px; }
+.step.on { border-bottom-color:var(--red); color:var(--red); font-weight:800; }
+.step.done { color:#4f7540; }
+.picker { max-height:210px; overflow-y:auto; padding:1px 3px 8px; scrollbar-width:thin; }
+.grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.ing { min-width:0; min-height:106px; padding:8px 5px 6px; position:relative; border:1px solid #b8b1a3; border-radius:8px; background:linear-gradient(145deg,#e0dfdb,#f8f8f3 48%,#c9c5bc); box-shadow:inset 0 0 0 3px #edebe5,inset 0 3px 5px #3332; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:11px; font-weight:700; }
+.ing:hover { border-color:#91642e; background:#fff1ce; }
+.ing img { width:65px; height:51px; object-fit:contain; image-rendering:pixelated; filter:drop-shadow(0 3px 2px #49351d24); margin-bottom:3px; }
+.ing.sel { border:2px solid #c47b25; background:#fff2cc; box-shadow:inset 0 0 0 2px #f6d995; }
+.ing.sel::after { content:"✓"; position:absolute; right:5px; top:3px; font-size:11px; color:#93501e; }
+.ing small { display:none; }
+.ing[aria-disabled="true"] { opacity:.46; }
+.ing[aria-disabled="true"] img { filter:grayscale(.8); }
+.ing .why { display:none; }
+.ing[aria-disabled="true"]:focus .why, .ing[aria-disabled="true"]:hover .why { display:block; position:absolute; bottom:0; inset-inline:0; border-radius:0 0 6px 6px; padding:4px; background:#553820; color:#fff; font-size:10px; z-index:3; }
+.tools { display:flex; align-items:center; justify-content:space-between; gap:8px; border-top:1px solid #dfd5c5; margin-top:3px; padding-top:8px; }
+.tools span { font-size:9px; color:#8a7760; max-width:190px; }
+.tools button { min-height:44px; border:0; padding:5px 0 5px 7px; background:none; color:#8b4d27; font-size:11px; white-space:nowrap; }
+.receipt { position:absolute; top:115px; right:28px; bottom:28px; width:274px; z-index:9; background:var(--paper); border-radius:4px 4px 0 0; box-shadow:var(--shadow); padding:23px 20px 8px; display:flex; flex-direction:column; overflow:auto; scrollbar-width:thin; }
+.receipt::before { content:""; position:absolute; left:calc(50% - 24px); top:0; width:48px; height:10px; background:#c6af8a; border-radius:0 0 5px 5px; box-shadow:0 2px 2px #43261922; }
+.receipt-title { display:flex; align-items:center; justify-content:space-between; color:#947859; }
+.receipt-title .eyebrow { font-size:9px; letter-spacing:1.5px; }
+.ticket-no { font:9px monospace; }
+.recipe-panel h2 { font-size:23px; margin:11px 0 7px; letter-spacing:1px; }
+.recipe-intro { color:var(--mute); font-size:11px; margin:0; }
+.recipe-parts { list-style:none; padding:12px 0; margin:12px 0 0; border-top:1px dashed #d9c7a8; }
+.recipe-parts li { display:flex; gap:8px; align-items:center; font-size:11px; margin:7px 0; }
+.recipe-parts li span:first-child { width:16px; height:16px; flex:none; border-radius:50%; background:#eee4d0; color:#987855; display:grid; place-items:center; font:9px monospace; }
+.recipe-parts .placeholder { color:#a18b74; font-size:11px; }
+.result { margin:5px 0 13px; padding:12px; border:1px solid #d5b878; border-radius:7px; background:#fff0c5; }
+.result h3 { margin:0 0 6px; font-size:15px; }
+.result .description, .warn, .hint, .near { font-size:10px; line-height:1.7; }
+.warn { color:#976f3f; margin-top:6px; }
+.hint { color:#8e5b2e; padding:8px 0; }
+.btn { min-height:44px; width:100%; border:1px solid #a7251a; border-bottom:3px solid #9a251a; border-radius:8px; padding:10px 8px; background:var(--red); color:#fff9eb; font-weight:700; font-size:12px; }
+.btn:hover:enabled { background:#a92920; }
+.btn.secondary { background:transparent; color:#875532; border:1px solid #cdbb9b; }
+.side { margin-top:auto; padding-top:18px; border-top:1px dashed #d9c7a8; }
+.cart-heading { display:flex; justify-content:space-between; align-items:center; }
+.cart-heading h2 { font-size:14px; margin:0; }
+.cart-heading>span { font-size:10px; color:var(--mute); }
+#cartList { list-style:none; padding:8px 0 0; margin:0; max-height:110px; overflow:auto; }
+#cartList li { display:flex; align-items:center; gap:8px; justify-content:space-between; font-size:11px; padding:6px 0; }
+#cartList li.empty-cart { color:#a18b74; padding:12px 0; font-size:10px; }
+.total-row { display:flex; align-items:center; justify-content:space-between; border-top:1px solid var(--line); padding-top:12px; margin-top:8px; }
+.total-row>span { font-size:11px; color:var(--mute); }
+.total-row strong { font:800 26px system-ui,sans-serif; color:#9a3625; }
+.demo { font-size:9px; line-height:1.6; color:#866d54; margin:8px 0 12px; }
+.quote { font-size:11px; color:#8b552a; }
+.checkout-actions { display:grid; gap:7px; }
+.ticket-footer { font-size:9px; text-align:center; color:#aa9476; letter-spacing:1px; padding:15px 0 7px; }
+.modal { position:fixed; inset:0; background:#26150fba; display:none; align-items:center; justify-content:center; padding:18px; z-index:30; backdrop-filter:blur(4px); }
+.modal.open { display:flex; }
+.dialog { background:var(--paper); border:1px solid #eed8b0; border-radius:18px; padding:24px; width:min(560px,100%); max-height:85svh; overflow-y:auto; box-shadow:var(--shadow); }
+.modal-heading { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.modal-heading h2 { font-size:20px; margin:6px 0; }
+.dialog .eyebrow { color:#9a7954; font-size:8px; }
+.dialog p { color:var(--mute); font-size:12px; }
+.store-item { width:100%; text-align:left; background:#fffdf7; border:1px solid #dfcfb2; border-radius:9px; padding:12px; margin-top:8px; min-height:60px; }
+.store-item:hover { background:#fff0c5; }
+.store-item small { display:block; color:var(--mute); font-size:11px; margin-top:4px; }
+.modal-back { display:inline-flex; align-items:center; min-height:44px; margin-top:14px; font-size:12px; color:#8b552a; }
+@media (min-width:1600px) { .ingredient-panel { width:390px; } .picker { max-height:250px; } .receipt { width:300px; } .scene-assembly { left:23%; right:19%; } .npc { width:340px; } .npc h2 { font-size:48px; } }
+@media (max-width:1170px) and (min-width:761px) { .topbar { left:20px; right:20px; gap:14px; } .brand small { display:none; } .store-label { max-width:185px; } .npc { left:24px; top:115px; width:280px; } .npc h2 { font-size:34px; } .ingredient-panel { left:20px; bottom:20px; width:295px; padding:14px; } .receipt { right:20px; width:240px; padding:23px 16px 8px; bottom:20px; } .scene-assembly { left:20%; right:19%; } .board { width:75%; left:10%; } .grid { gap:6px; } .ing img { width:55px; } }
+@media (max-width:760px) {
+ .workshop { height:auto; max-height:none; min-height:100svh; padding-bottom:20px; }
+ .kitchen-backdrop { bottom:auto; height:590px; background-position:48% bottom; }
+ .countertop { top:470px; }
+ .supply-trays { top:370px; width:100%; height:140px; }
+ .topbar { top:12px; left:14px; right:14px; gap:8px 12px; flex-wrap:wrap; }
+ .back-link { min-height:44px; font-size:11px; padding:8px 11px; }
+ .brand { gap:8px; }
+ .brand-mark { font-size:29px; }
+ .brand h1 { font-size:17px; }
+ .brand small { font-size:7px; letter-spacing:1px; }
+ .topbar .sp { display:none; }
+ .store-label { flex:1 1 calc(100% - 110px); max-width:calc(100% - 110px); min-width:0; width:auto; margin-left:2px; font-size:10px; }
+ .topbar .chip { flex:none; font-size:11px; padding:6px 12px; min-height:44px; }
+ .npc { position:relative; left:auto; top:auto; width:auto; padding:136px 20px 0; }
+ .npc>.eyebrow { font-size:9px; }
+ .npc h2 { font-size:30px; margin:9px 0 14px; }
+ .npc h2 br { display:none; }
+ .assistant { max-width:410px; padding:9px 12px; gap:9px; }
+ .clerk { width:30px; height:43px; }
+ .bubble p { font-size:11px; }
+ .bench { position:relative; inset:auto; display:flex; flex-direction:column; }
+ .scene-assembly { position:relative; left:auto; right:auto; bottom:auto; height:320px; width:100%; }
+ .board { width:76%; height:63%; left:12%; bottom:14%; }
+ .hand-left { width:68%; left:-8%; bottom:-3%; }
+ .hand-right { width:56%; right:-12%; bottom:-5%; }
+ .assembly-caption { bottom:8px; left:8px; right:8px; font-size:9px; }
+ .ingredient-panel { position:relative; left:auto; bottom:auto; width:auto; margin:10px 14px 16px; padding:17px; }
+ .picker { max-height:280px; }
+ .ing { min-height:108px; }
+ .tools span { max-width:200px; }
+ .receipt { position:relative; inset:auto; width:auto; margin:0 14px; padding:24px 22px 12px; max-height:none; overflow:visible; }
+ .side { margin-top:20px; }
+ .recipe-panel h2 { font-size:22px; }
+ .recipe-intro, .recipe-parts li, .hint { font-size:12px; }
+ .checkout-actions { grid-template-columns:1fr 1fr; }
+ .dialog { padding:20px; }
+ .modal-heading h2 { font-size:17px; }
+ .modal-heading .chip { padding:7px 11px; }
+ .demo { font-size:10px; }
+}
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none !important; transition:none !important; } }
+.ingredient-art { height:55px; position:relative; width:70px; display:flex; justify-content:center; align-items:center; }
+.ingredient-art img { position:relative; }
+.ingredient-art.double img:first-child { translate:0 8px; }
+.ingredient-art.double img:last-child { position:absolute; top:-5px; left:3px; }
+.ingredient-art.fish img { filter:brightness(1.13) saturate(.72); }
+.ingredient-bacon { display:block; width:58px; height:30px; margin:13px 0 12px; background:repeating-linear-gradient(165deg,#954a32 0 5px,#edb188 6px 10px,#b66342 11px 17px); border-radius:6px; transform:rotate(-8deg); }
+.result-price { font-weight:800; font-size:20px; color:#a43a24; margin:8px 0; }
+.result .btn { margin-top:8px; }
+.demo.live { border-left:2px solid #c37a47; padding-left:7px; }
+
+/* ---------- 卡路里与营养仪表盘 ---------- */
+.board-cal-hud { position:absolute; top:6%; left:50%; transform:translateX(-50%); z-index:7; display:inline-flex; align-items:center; gap:8px; padding:6px 14px; border-radius:999px; background:#3a2216df; border:1px solid #ffcf5275; color:#fff8e7; box-shadow:0 8px 20px #21110845; font-size:12px; white-space:nowrap; backdrop-filter:blur(4px); transition:transform .22s ease, border-color .25s ease; }
+.board-cal-hud.pulse { animation:hud-pulse .36s ease; }
+@keyframes hud-pulse { 45% { transform:translateX(-50%) scale(1.08); } }
+.board-cal-hud strong { font:800 15px/1 system-ui,sans-serif; color:var(--gold); font-variant-numeric:tabular-nums; }
+.board-cal-tag { font-size:10px; font-weight:700; padding:2px 7px; border-radius:999px; background:#ffffff24; color:#ffe7ad; }
+.board-cal-tag.level-light { background:#2e6b34cc; color:#e4ffdf; }
+.board-cal-tag.level-balanced { background:#b36b15cc; color:#fff3d1; }
+.board-cal-tag.level-hearty { background:#b8451bcc; color:#ffe6dc; }
+.board-cal-tag.level-indulgent { background:#a7211acc; color:#ffe0de; }
+
+.cal-floats { position:absolute; inset:0; pointer-events:none; z-index:8; overflow:hidden; }
+.cal-float { position:absolute; left:50%; bottom:54%; transform:translateX(-50%); padding:4px 11px; border-radius:999px; background:#2f1a10e6; border:1px solid #ffcf52; color:#ffd86b; font:800 12px/1.3 system-ui,sans-serif; white-space:nowrap; box-shadow:0 6px 16px #1c0e0748; animation:cal-float-up 1.15s cubic-bezier(.16,.84,.32,1) forwards; }
+.cal-float.minus { border-color:#e0a080; color:#ffbfa3; }
+@keyframes cal-float-up {
+  0% { opacity:0; transform:translate(-50%, 10px) scale(.86); }
+  18% { opacity:1; transform:translate(-50%, 0) scale(1.04); }
+  100% { opacity:0; transform:translate(-50%, -44px) scale(.96); }
+}
+
+.ing-kcal { margin-top:2px; font:700 10px/1.2 system-ui,sans-serif; color:#8b572a; background:#efe4ce; border-radius:999px; padding:2px 6px; font-variant-numeric:tabular-nums; }
+.ing.sel .ing-kcal { background:#f3cf7a; color:#6b390e; }
+
+.nutri-card { margin-top:11px; padding:11px 12px; border-radius:10px; background:linear-gradient(180deg,#fffdf8,#f7efe0); border:1px solid #e2cfa8; box-shadow:inset 0 1px 0 #fff; }
+.nutri-top { display:flex; align-items:baseline; justify-content:space-between; gap:6px; }
+.nutri-kcal-wrap { display:flex; align-items:baseline; gap:4px; }
+.nutri-kcal-val { font:900 24px/1 system-ui,sans-serif; color:#9e301d; font-variant-numeric:tabular-nums; }
+.nutri-kcal-unit { font-size:11px; font-weight:700; color:#8a6d4f; }
+.nutri-badge { font-size:10px; font-weight:800; padding:2px 8px; border-radius:999px; background:#e7decb; color:#6d5338; white-space:nowrap; }
+.nutri-badge.level-light { background:#dff0d8; color:#2e6b34; }
+.nutri-badge.level-balanced { background:#fff0c2; color:#8f5710; }
+.nutri-badge.level-hearty { background:#ffe1cc; color:#9c3b16; }
+.nutri-badge.level-indulgent { background:#ffd8d6; color:#a61e17; }
+.nutri-sub { font-size:10px; color:#8e7559; margin-top:3px; }
+.nutri-meter { height:6px; border-radius:999px; background:#e9dec8; margin:8px 0; overflow:hidden; }
+.nutri-meter-fill { height:100%; width:12%; border-radius:999px; background:linear-gradient(90deg,#5ca852,#ffbc0d 58%,#da291c); transition:width .38s cubic-bezier(.2,.8,.2,1); }
+.nutri-macros { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; margin-top:6px; }
+.macro-item { background:#fffaf0; border:1px solid #eadbc0; border-radius:7px; padding:5px 6px; text-align:center; }
+.macro-label { display:block; font-size:9px; color:#8d7357; }
+.macro-val { display:block; font:800 11px/1.3 system-ui,sans-serif; color:#4b301f; font-variant-numeric:tabular-nums; }
+.macro-bar { height:3px; background:#eee3cf; border-radius:99px; margin-top:3px; overflow:hidden; }
+.macro-bar i { display:block; height:100%; border-radius:99px; transition:width .35s ease; }
+.macro-item.protein .macro-bar i { background:#d45b3e; }
+.macro-item.fat .macro-bar i { background:#e6a229; }
+.macro-item.carb .macro-bar i { background:#599a52; }
+.nutri-tip { margin:7px 0 0; font-size:10px; line-height:1.45; color:#7d6245; }
+
+.recipe-parts li .part-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.recipe-parts li .part-kcal { font:700 10px/1 system-ui,sans-serif; color:#8c6239; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.recipe-parts li.bun-row { color:#8d7357; font-size:10px; }
+.result-meta { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:6px 0 4px; }
+.result-kcal { font:700 11px/1.2 system-ui,sans-serif; color:#7e4e24; background:#fae3a7; padding:3px 8px; border-radius:999px; }

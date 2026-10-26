@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from .engine import BurgerEngine, State
-from .recipes import PATTY, SPEC, TOPPING, Ingredient, Recipe
+from .recipes import PATTY, SPEC, TOPPING, Ingredient, Recipe, ingredient_nutrition, stack_nutrition
 
 KINDS = (PATTY, SPEC, TOPPING)
 
@@ -21,6 +21,7 @@ def parse_selection(raw: list[dict]) -> frozenset[Ingredient]:
 
 
 def _recipe_json(r: Recipe, store: str | None) -> dict:
+    nut = r.nutrition
     return {
         "code": r.code,
         "name": r.name,
@@ -30,6 +31,8 @@ def _recipe_json(r: Recipe, store: str | None) -> dict:
         "price": r.price_at(store),
         "image": r.image,
         "verified": r.verified,
+        "kcal": nut["kcal"],
+        "nutrition": nut,
     }
 
 
@@ -37,7 +40,10 @@ def state_json(eng: BurgerEngine, selected: frozenset[Ingredient], store: str | 
     st: State = eng.evaluate(selected, store)
     return {
         "step": st.step,
-        "selected": [{"name": i.name, "kind": i.kind} for i in sorted(st.selected, key=lambda i: (KINDS.index(i.kind), i.name))],
+        "selected": [
+            {"name": i.name, "kind": i.kind, **ingredient_nutrition(i.name)}
+            for i in sorted(st.selected, key=lambda i: (KINDS.index(i.kind), i.name))
+        ],
         "options": [
             {
                 "name": o.ingredient.name,
@@ -46,17 +52,28 @@ def state_json(eng: BurgerEngine, selected: frozenset[Ingredient], store: str | 
                 "selected": o.selected,
                 "reason": o.reason,
                 "leadsTo": list(o.leads_to),
+                **ingredient_nutrition(o.ingredient.name),
             }
             for o in st.options
         ],
         "exact": [_recipe_json(r, store) for r in st.exact],
         "reachableCount": len(st.reachable),
         "hints": [
-            {"add": {"name": h.add.name, "kind": h.add.kind}, "burger": h.burger.name} for h in st.hints
+            {
+                "add": {
+                    "name": h.add.name,
+                    "kind": h.add.kind,
+                    "kcal": ingredient_nutrition(h.add.name)["kcal"],
+                },
+                "burger": h.burger.name,
+                "burgerKcal": h.burger.nutrition["kcal"],
+            }
+            for h in st.hints
         ],
         "nearest": [
             {"burger": _recipe_json(r, store), "missing": list(m), "extra": list(e)} for r, m, e in st.nearest
         ],
+        "nutrition": stack_nutrition(st.selected, include_top_bun=bool(st.exact)),
         # 配方里的规格/主料是人工推断, 未核对时前端要标注, 不能当作官方信息
         "unverified": any(not r.verified for r in st.exact),
     }

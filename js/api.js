@@ -8,9 +8,34 @@
   const MD = g.MD;
   const API = (MD.API = { online: false, sid: null, store: null, demo: true, pending: null });
 
+  /* 访问口令: 服务端设了 ACCESS_KEY 时所有 /api 都要带。第一次访问问一次, 之后存在浏览器里;
+   * 并发请求只弹一个输入框(asking 复用同一个 Promise), 口令错了下次请求会再问。 */
+  const KEY_STORE = 'mcd.accessKey';
+  let asking = null;
+  function key() { try { return localStorage.getItem(KEY_STORE) || ''; } catch (e) { return ''; } }
+  function askKey() {
+    if (!asking) {
+      asking = new Promise((resolve) => {
+        let k = '';
+        try { k = (window.prompt('请输入访问口令') || '').trim(); } catch (e) { k = ''; }
+        if (k) { try { localStorage.setItem(KEY_STORE, k); } catch (e) {} }
+        resolve(k);
+      }).finally(() => { asking = null; });
+    }
+    return asking;
+  }
+
   async function raw(path, body) {
-    const r = await fetch(path, body === undefined ? undefined
-      : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    let r = null;
+    for (let i = 0; i < 2; i++) {
+      const headers = { 'X-Access-Key': key() };
+      if (body !== undefined) headers['Content-Type'] = 'application/json';
+      r = await fetch(path, body === undefined
+        ? { headers }
+        : { method: 'POST', headers, body: JSON.stringify(body) });
+      if (r.status !== 401 || i > 0) break;      // 没设口令 / 口令对 / 已经问过一次
+      if (!(await askKey())) break;              // 用户取消输入, 直接按失败返回
+    }
     const j = await r.json().catch(() => ({}));
     return { r, j };
   }
@@ -46,6 +71,13 @@
     MD.P = {}; MD.LIST = [];
     for (const it of items) {
       const d = Object.assign({}, it, { sprite: it.sprite });
+      if (MD.itemNutrition) {
+        const n = MD.itemNutrition(d);
+        if (!d.kcal) d.kcal = n.kcal;
+        if (d.protein === undefined) d.protein = n.protein;
+        if (d.fat === undefined) d.fat = n.fat;
+        if (d.carb === undefined) d.carb = n.carb;
+      }
       MD.P[d.id] = d; MD.LIST.push(d);
     }
     MD.COMBOS = [];   // 套餐需拆成单品并由后端结算优惠, 本版不提供

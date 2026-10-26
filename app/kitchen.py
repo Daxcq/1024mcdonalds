@@ -45,6 +45,31 @@ BURGER_ING: dict[str, list[str]] = {
 # 用了替代素材的汉堡: 动画里的肉排与实物不同, 前端可据此给出提示
 APPROX = {"1600": "鱼排用鸡排素材代替", "9900003586": "鱼排用鸡排素材代替"}
 
+# 常见餐品参考热量(kcal), 当接口未返回 m.kcal 时作为兜底参考值
+DEFAULT_KCAL_BY_CODE: dict[str, int] = {
+    "1100": 555, "1120": 470, "1106": 455, "4648": 505, "521316": 510,
+    "511781": 540, "511782": 530, "1450": 395, "1440": 425, "1406": 380,
+    "521952": 430, "521953": 535, "1600": 420, "9900003586": 530,
+}
+DEFAULT_KCAL_BY_KW: tuple[tuple[str, int], ...] = (
+    ("脆脆薯条", 330), ("薯条", 310), ("脆薯饼", 150), ("麦乐鸡", 220),
+    ("麦辣鸡翅", 240), ("V翅", 230), ("麦麦脆汁鸡", 280), ("派", 250),
+    ("可乐", 140), ("雪碧", 145), ("纯悦", 0), ("橙", 120), ("红茶", 90),
+    ("美式", 15), ("鲜萃咖啡", 15), ("奶铁", 160),
+    ("圆筒冰淇淋", 145), ("新地", 260), ("麦旋风", 340),
+)
+
+
+def _estimate_kcal(m: Meal) -> int:
+    if m.kcal is not None and m.kcal > 0:
+        return int(m.kcal)
+    if m.code in DEFAULT_KCAL_BY_CODE:
+        return DEFAULT_KCAL_BY_CODE[m.code]
+    for kw, kcal in DEFAULT_KCAL_BY_KW:
+        if kw in m.name:
+            return kcal
+    return 260
+
 # 名称 -> 素材 key(前端 assets/sprites 里存在的)。按"精确 -> 关键词"两级匹配。
 SPRITE_BY_NAME = {
     "巨无霸": "bigmac", "麦香鸡": "mcchicken", "麦辣鸡腿汉堡": "spicy_leg", "龙焰鸡腿堡": "spicy_mcchicken",
@@ -138,6 +163,9 @@ NEUTRAL = {"drink": "cup_m", "soft": "mcflurry", "fry": None, "burger": "burger"
 def map_meal(m: Meal) -> tuple[KitchenItem | None, str]:
     """单个真实餐品 -> 动画定义。返回 (定义, 跳过原因); 成功时原因为空。"""
     item, why = _map_meal(m)
+    if item:
+        item.params = dict(item.params)
+        item.params.setdefault("kcal", _estimate_kcal(m))
     if item and not item.approx and m.name not in SPRITE_BY_NAME and m.code not in BURGER_ING:
         # 流程参数是按关键词匹配出来的, 素材却没有精确对应: 能换中性图就换, 并一律标注"近似"
         neutral = NEUTRAL.get(item.kind)

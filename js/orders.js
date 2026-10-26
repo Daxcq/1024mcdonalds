@@ -29,6 +29,7 @@
           </fieldset>
           <details><summary>查看官方订单详情</summary><pre data-details></pre></details>
         </div>
+        <button type="button" data-recover hidden>检查下单结果</button>
         <p data-feedback role="status" aria-live="polite"></p>`;
       document.body.appendChild(this.dialog);
       const style = document.createElement('link'); style.rel = 'stylesheet'; style.href = '/assets/order.css';
@@ -36,6 +37,11 @@
       this.find('[data-close]').onclick = () => this.dialog.close();
       this.find('[data-confirm]').onclick = () => this.confirm();
       this.find('[data-refresh]').onclick = () => this.refresh();
+      this.find('[data-recover]').onclick = () => this.run('正在检查下单结果…', async () => {
+        await this.restore();
+        if (this.order) { this.showSaved(); this.message('已找回订单，请刷新官方状态。'); if (this.onCreated) this.onCreated(); }
+        else this.message(this.uncertain ? '结果仍不确定，请前往麦当劳 App 核实，不要重复下单。' : '当前会话未记录已创建的订单，可以重新结算。');
+      });
       this.find('[data-cancel]').onclick = () => {
         this.find('[data-reasons]').hidden = false; this.find('[data-reason]').focus();
       };
@@ -66,6 +72,7 @@
       const cannotCancel = this.busy || !this.order || this.order.terminal || this.order.cancel_requested;
       this.find('[data-cancel]').disabled = cannotCancel;
       this.find('[data-cancel-confirm]').disabled = cannotCancel;
+      this.find('[data-recover]').hidden = !this.uncertain;
     }
     summary(source) {
       const box = this.find('[data-summary]'); box.replaceChildren();
@@ -78,7 +85,7 @@
       if (source.take_way) { const way = document.createElement('p'); way.textContent = '取餐方式：' + source.take_way; box.appendChild(way); }
     }
     showQuote(quote) {
-      if (this.order && !this.order.terminal || this.uncertain) { this.showSaved(); return; }
+      if ((this.order && !this.order.terminal) || this.uncertain) { this.showSaved(); return; }
       this.quote = quote; this.summary(quote);
       this.find('#orderTitle').textContent = '确认订单';
       this.find('[data-quote]').hidden = false; this.find('[data-order]').hidden = true;
@@ -99,10 +106,11 @@
       this.find('[data-id]').textContent = order.id;
       this.find('[data-status]').textContent = order.status_text;
       this.find('[data-time]').textContent = new Date(order.updated_at).toLocaleString('zh-CN');
-      const pay = this.find('[data-pay]'); pay.hidden = !order.pay_url || order.terminal || order.cancel_requested;
+      const pay = this.find('[data-pay]'); pay.hidden = !order.pay_url || order.terminal || order.paid || order.cancel_requested;
       if (!pay.hidden) pay.href = order.pay_url; else pay.removeAttribute('href');
       this.find('[data-pay-hint]').textContent = order.terminal ? '订单已结束。'
         : order.cancel_requested ? '取消请求已提交，请刷新状态确认最终结果。'
+        : order.paid ? '官方状态显示已支付，可继续刷新订单进度。'
         : order.pay_url ? '支付后请刷新订单状态，实际支付结果以麦当劳官方为准。' : '接口未返回支付链接，可在麦当劳 App 查看并支付这笔订单。';
       this.find('[data-details]').textContent = JSON.stringify(order.data, null, 2);
       this.find('[data-reasons]').hidden = true; this.syncButtons();
@@ -114,38 +122,41 @@
         this.find('[data-quote]').hidden = true; this.find('[data-order]').hidden = !this.order;
         this.message('上次下单结果不确定，请先到麦当劳 App 查看订单，不要重复下单。', true);
       }
-      this.show();
+      this.syncButtons(); this.show();
     }
     async restore() {
       const r = await this.api('/api/order?session_id=' + encodeURIComponent(this.sessionId()));
-      this.uncertain = r.uncertain;
+      this.uncertain = r.uncertain || r.busy;
       if (r.order) this.renderOrder(r.order);
       this.opener.hidden = !(r.order || r.uncertain || r.busy);
+      this.syncButtons(); return r;
     }
     async confirm() {
       if (this.demo || !this.quote || this.uncertain) return;
-      const quote = this.quote;
+      const quote = this.quote, onCreated = this.onCreated;
       await this.run('正在创建订单，请勿重复提交…', async () => {
         let r;
         try {
           r = await this.api('/api/order/confirm', { session_id: this.sessionId(), quote_id: quote.quote_id, take_way_code: this.find('[data-way]').value });
         } catch (e) {
           // 请求可能已经到达服务端, 先读取本地订单记录, 不重发 create-order。
+          let saved = null;
           try {
-            await this.restore();
-            if (this.order && this.order.quote_id === quote.quote_id) {
-              this.renderOrder(this.order); if (this.onCreated) this.onCreated();
+            saved = await this.api('/api/order?session_id=' + encodeURIComponent(this.sessionId()));
+            this.uncertain = saved.uncertain || saved.busy;
+            if (saved.order && saved.order.quote_id === quote.quote_id) {
+              this.renderOrder(saved.order); if (onCreated) onCreated();
               this.message('订单已创建，请刷新状态后完成支付。'); return;
             }
           } catch (_) {}
           // 无法确定服务端是否已执行时, 当前页面也禁止重复确认。
-          if (!e.status || e.status >= 500) {
+          if (!e.status || !saved || saved.uncertain || saved.busy) {
             this.uncertain = true; this.opener.hidden = false;
             this.message(e.message + ' 请先到麦当劳 App 核实订单，不要重复下单。', true); return;
           }
           throw e;
         }
-        this.renderOrder(r.order_state); if (this.onCreated) this.onCreated();
+        this.renderOrder(r.order_state); if (onCreated) onCreated();
         this.message('订单已创建，请通过官方支付链接完成支付。');
       });
     }

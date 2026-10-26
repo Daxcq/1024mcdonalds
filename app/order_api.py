@@ -1,4 +1,5 @@
 """真实下单闭环。只允许操作当前会话创建的订单, 写请求绝不自动重试。"""
+import asyncio
 from datetime import datetime, timezone
 from typing import Literal
 from urllib.parse import urlsplit
@@ -36,9 +37,12 @@ def _update(order, data):
     # 没有上游的状态码字典, 不猜测数字码的含义。
     order["data"].update(data)
     d = order["data"]
-    status = next((d[k] for k in ("orderStatusName", "orderStatusDesc", "statusName", "statusDesc", "orderStatus", "status")
-                   if d.get(k) is not None and d[k] != ""), None)
-    order["status_text"] = str(status) if status is not None else "待查询（以麦当劳官方状态为准）"
+    status = next((data[k] for k in ("orderStatusName", "orderStatusDesc", "statusName", "statusDesc", "orderStatus", "status")
+                   if data.get(k) is not None and data[k] != ""), None)
+    if status is None:
+        status = order.get("status_text", "待查询（以麦当劳官方状态为准）")
+    order["status_text"] = str(status)
+    order["paid"] = str(status).strip().lower() in {"已支付", "支付成功", "paid"}
     order["terminal"] = str(status).strip().lower() in {
         "已取消", "订单已取消", "已完成", "订单已完成", "已关闭", "订单已关闭", "cancelled", "canceled", "completed", "closed",
     }
@@ -112,7 +116,7 @@ def make_router(get_session, get_mcd, is_demo):
                 res = await get_mcd().call("create-order", {
                     **s.store.scope(), "items": p["items"], "takeWayCode": req.take_way_code,
                 }, allow_write=True)
-            except McdUnavailable:
+            except (McdUnavailable, asyncio.CancelledError):
                 s.order_uncertain = True
                 raise McdUnavailable("下单请求中断, 结果不确定。请到麦当劳 App 查看订单, 不要重复下单")
             if res.get("success") is False:

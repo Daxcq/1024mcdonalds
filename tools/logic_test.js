@@ -71,10 +71,17 @@ const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fail++;
     await run(E, 150000, () => b.state === 'done');
     ok(a.state === 'trashed' && b.state === 'done' && !E.props.some((p) => p.order === a), '5 巨无霸做到一半取消：半成品被丢掉，继续做可乐');
   }
-  // 6. 全菜单各做一遍
+  // 6. 全菜单各做一遍 + 验证实时卡路里累加
   for (const p of MD.LIST) {
-    const E = new MD.Engine(); const o = E.add(p.id); const t = await run(E, 200000, () => o.state === 'done');
-    ok(o.state === 'done' && o.slot >= 0, `6 ${p.id.padEnd(16)} ${(t / 1000).toFixed(1)}s`);
+    const E = new MD.Engine(); const o = E.add(p.id);
+    const seenKcals = new Set();
+    let sawPop = false;
+    const t = await run(E, 200000, () => o.state === 'done', () => {
+      if (o.liveNutri && o.liveNutri.kcal > 0) seenKcals.add(o.liveNutri.kcal);
+      if (E.calPops && E.calPops.length > 0) sawPop = true;
+    });
+    const kcalMatch = o.liveNutri.kcal === o.totalNutri.kcal && (p.cat !== 'burger' || seenKcals.size >= 4);
+    ok(o.state === 'done' && o.slot >= 0 && kcalMatch && (o.totalNutri.kcal === 0 || sawPop), `6 ${p.id.padEnd(16)} ${(t / 1000).toFixed(1)}s (${o.liveNutri.kcal} kcal)`);
   }
   console.log(fail ? fail + ' FAILED' : 'ALL PASS'); process.exit(fail ? 1 : 0);
 })();

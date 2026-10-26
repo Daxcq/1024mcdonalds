@@ -6,7 +6,17 @@ import unittest
 from collections import defaultdict
 
 from app.burger.engine import BurgerEngine
-from app.burger.recipes import PATTY, SPEC, TOPPING, Ingredient, load_recipes
+from app.burger.game import parse_selection, state_json
+from app.burger.recipes import (
+    PATTY,
+    SPEC,
+    TOPPING,
+    Ingredient,
+    calorie_level,
+    ingredient_nutrition,
+    load_recipes,
+    stack_nutrition,
+)
 
 
 def P(n): return Ingredient(n, PATTY)
@@ -49,6 +59,43 @@ class EngineTest(unittest.TestCase):
     def test_每个汉堡都有至少一家门店的价格(self):
         for r in self.recipes:
             self.assertTrue(r.prices, r.name)
+
+    # --- 营养与卡路里指标 ---
+    def test_每个食材与汉堡都有卡路里和三大营养素(self):
+        for ing in self.eng.universe(None):
+            info = ingredient_nutrition(ing.name)
+            self.assertGreaterEqual(info["kcal"], 0)
+            self.assertIn("protein", info)
+            self.assertIn("fat", info)
+            self.assertIn("carb", info)
+        for r in self.recipes:
+            nutri = r.nutrition
+            self.assertGreater(nutri["kcal"], 250, r.name)
+            self.assertGreater(nutri["protein"], 10, r.name)
+            self.assertIn(nutri["level"], ("light", "balanced", "hearty", "indulgent"))
+
+    def test_堆叠热量随食材实时累加且封顶增加面包顶热量(self):
+        n0 = stack_nutrition([], include_top_bun=False)
+        n1 = stack_nutrition([P("牛肉"), S("双层牛肉饼")], include_top_bun=False)
+        n2 = stack_nutrition([P("牛肉"), S("双层牛肉饼")], include_top_bun=True)
+        self.assertEqual(n0["kcal"], ingredient_nutrition("面包底")["kcal"])
+        self.assertGreater(n1["kcal"], n0["kcal"])
+        self.assertEqual(n2["kcal"] - n1["kcal"], ingredient_nutrition("面包顶")["kcal"])
+        self.assertEqual(calorie_level(350)["level"], "light")
+        self.assertEqual(calorie_level(800)["level"], "indulgent")
+
+    def test_工坊接口返回实时营养仪表盘数据(self):
+        sel = parse_selection([
+            {"name": "鸡肉", "kind": PATTY},
+            {"name": "鸡腿排", "kind": SPEC},
+            {"name": "烤味酱", "kind": TOPPING},
+            {"name": "生菜", "kind": TOPPING},
+        ])
+        st = state_json(self.eng, sel, self.full)
+        self.assertIn("nutrition", st)
+        self.assertTrue(st["nutrition"]["hasTopBun"])
+        self.assertEqual(st["nutrition"]["kcal"], st["exact"][0]["kcal"])
+        self.assertTrue(all("kcal" in o for o in st["options"]))
 
     # --- 步骤 ---
     def test_步骤顺序(self):
