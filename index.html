@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>麦当劳 · 点餐 × 后厨实时动画</title>
-<link rel="stylesheet" href="assets/npc/npc.css">
 <style>
 :root { --red:#da291c; --red-d:#b71c12; --yellow:#ffbc0d; --ink:#27251f; --mute:#6f6b63; --line:#ece7dc; --bg:#faf7f0; }
 * { box-sizing:border-box; margin:0; padding:0; }
@@ -37,8 +36,7 @@ body { font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif; color:v
 .card:active { transform:scale(.97); }
 .card img { width:86px; height:78px; object-fit:contain; display:block; margin:0 auto 6px; image-rendering:pixelated; }
 .card .n { font-size:13.5px; font-weight:600; line-height:1.25; min-height:34px; display:flex; align-items:center; justify-content:center; }
-.card .kcal { display:inline-block; font-size:11px; font-weight:700; color:#8a5200; background:#fff5db; border:1px solid #f4dc9c; border-radius:999px; padding:1px 7px; margin-top:3px; font-variant-numeric:tabular-nums; }
-.card .p { color:var(--red); font-weight:800; font-size:15px; margin-top:3px; }
+.card .p { color:var(--red); font-weight:800; font-size:15px; margin-top:2px; }
 .card .p::before { content:"¥"; font-size:11px; margin-right:1px; }
 .card .plus { position:absolute; right:8px; top:8px; width:26px; height:26px; border-radius:50%; background:var(--yellow); display:grid; place-items:center; font-weight:900; font-size:18px; line-height:1; }
 .card .combo { position:absolute; left:8px; top:8px; background:var(--red); color:#fff; font-size:10px; padding:1px 6px; border-radius:8px; }
@@ -75,7 +73,7 @@ body { font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif; color:v
 .btn.g:hover { border-color:var(--red); color:var(--red); }
 .btn[disabled] { opacity:.4; cursor:not-allowed; }
 /* ---------- 制作进度卡片 ---------- */
-.prog { margin:10px 12px 0; flex:none; background:linear-gradient(180deg,#fff,#fbf8f1); border:1px solid #ece4d4; border-radius:18px; padding:12px 14px 12px; box-shadow:0 4px 16px rgba(80,50,10,.08); overflow:hidden; transition:opacity .3s, transform .3s, max-height .35s, margin .35s, padding .35s; max-height:340px; }
+.prog { margin:10px 12px 0; flex:none; background:linear-gradient(180deg,#fff,#fbf8f1); border:1px solid #ece4d4; border-radius:18px; padding:12px 14px 12px; box-shadow:0 4px 16px rgba(80,50,10,.08); overflow:hidden; transition:opacity .3s, transform .3s, max-height .35s, margin .35s, padding .35s; max-height:230px; }
 .prog.hide { opacity:0; transform:translateY(-8px); max-height:0; margin-top:0; padding-top:0; padding-bottom:0; border-width:0; pointer-events:none; }
 .prog.swap { animation:swap .35s ease; }
 @keyframes swap { from { opacity:.2; transform:translateY(6px); } }
@@ -88,34 +86,8 @@ body { font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif; color:v
 .prog-c { font-weight:800; font-size:15px; color:#9a8f80; font-variant-numeric:tabular-nums; }
 .prog-c b { color:var(--red); }
 .prog.sad .prog-s, .prog.sad .prog-c { color:#d6221a; }
-.bar { height:4px; background:#efe8da; border-radius:2px; margin:9px 0 9px; overflow:hidden; }
+.bar { height:4px; background:#efe8da; border-radius:2px; margin:10px 0 10px; overflow:hidden; }
 .bar i { display:block; height:100%; width:0; background:linear-gradient(90deg,#ffbc0d,#da291c); border-radius:2px; transition:width .5s cubic-bezier(.2,.8,.2,1); }
-/* 实时营养仪表盘 */
-.pg-nutri { background:linear-gradient(180deg,#fffaf0,#f7efe0); border:1px solid #eadcc3; border-radius:12px; padding:7px 10px 8px; margin-bottom:9px; }
-.pg-nutri-top { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:6px; }
-.pg-cal-wrap { display:flex; align-items:baseline; gap:4px; font-variant-numeric:tabular-nums; }
-.pg-cal-lbl { font-size:11.5px; font-weight:800; color:#7a5628; }
-.pg-cal-num { font-size:18px; font-weight:900; color:#d6221a; transition:transform .2s; display:inline-block; }
-.pg-cal-num.bump { animation:calBump .32s ease; }
-@keyframes calBump { 45% { transform:scale(1.22); color:#ff7a00; } }
-.pg-cal-unit { font-size:11px; color:#8a7659; font-weight:700; }
-.pg-cal-target { font-size:11px; color:#9a8c78; }
-.pg-delta { font-size:11px; font-weight:900; color:#fff; background:#da291c; padding:1px 7px; border-radius:999px; margin-left:4px; animation:deltaPop .35s ease; }
-@keyframes deltaPop { 0% { transform:scale(.7); opacity:0; } 60% { transform:scale(1.1); } 100% { transform:scale(1); opacity:1; } }
-.pg-badge { font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:999px; white-space:nowrap; }
-.pg-badge.light { background:#dff3e4; color:#1f7a39; }
-.pg-badge.balanced { background:#e3effd; color:#1d5fa7; }
-.pg-badge.hearty { background:#fff0cf; color:#9a5b00; }
-.pg-badge.heavy { background:#ffe1de; color:#b81d13; }
-.pg-macros { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
-.pg-m { background:rgba(255,255,255,.72); border:1px solid #eadfce; border-radius:8px; padding:4px 7px; }
-.pg-m-h { display:flex; justify-content:space-between; align-items:baseline; font-size:11px; color:#7c7060; }
-.pg-m-h b { font-size:11.5px; font-weight:800; color:#27251f; font-variant-numeric:tabular-nums; }
-.pg-m-bar { height:4px; background:#ebe2d3; border-radius:999px; margin-top:3px; overflow:hidden; }
-.pg-m-bar i { display:block; height:100%; width:0%; border-radius:999px; transition:width .35s ease; }
-.pg-m.pro .pg-m-bar i { background:#e0533c; }
-.pg-m.fat .pg-m-bar i { background:#f0a518; }
-.pg-m.carb .pg-m-bar i { background:#3b82f6; }
 .steps { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px 6px; }
 .stp { min-width:0; display:flex; align-items:center; gap:6px; font-size:12px; color:#9a9186; transition:color .3s; }
 .stp .bx { flex:none; width:22px; height:22px; border-radius:7px; background:#efebe3; display:grid; place-items:center; font-size:12px; color:transparent; transition:background .3s, color .3s, transform .3s; }
@@ -144,7 +116,7 @@ body { font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif; color:v
     </div>
   </div>
   <div id="panel">
-    <div class="top"><span class="arch">M</span><div><h1>麦当劳 · 点餐<small id="subtitle">右边点单，左边后厨马上开做</small></h1></div><button class="btn g" id="store" style="margin-left:auto;padding:6px 12px;font-size:12px" hidden>选门店</button></div>
+    <div class="top"><span class="arch">M</span><div><h1>麦当劳 · 点餐<small>右边点单，左边后厨马上开做</small></h1></div></div>
     <div class="prog hide" id="prog" aria-live="polite">
       <div class="prog-h">
         <div class="prog-ic"><img id="pgImg" alt=""></div>
@@ -152,32 +124,6 @@ body { font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif; color:v
         <div class="prog-c" id="pgCnt"></div>
       </div>
       <div class="bar"><i id="pgBar"></i></div>
-      <div class="pg-nutri" id="pgNutri">
-        <div class="pg-nutri-top">
-          <div class="pg-cal-wrap">
-            <span class="pg-cal-lbl">🔥 实时热量</span>
-            <b class="pg-cal-num" id="pgKcal">0</b>
-            <span class="pg-cal-unit">kcal</span>
-            <span class="pg-cal-target" id="pgTarget">/ 0 kcal</span>
-            <span class="pg-delta" id="pgDelta" hidden>+0 kcal</span>
-          </div>
-          <span class="pg-badge light" id="pgBadge">轻盈低负担</span>
-        </div>
-        <div class="pg-macros">
-          <div class="pg-m pro">
-            <div class="pg-m-h"><span>蛋白质</span><b id="pgPro">0g</b></div>
-            <div class="pg-m-bar"><i id="pgProBar"></i></div>
-          </div>
-          <div class="pg-m fat">
-            <div class="pg-m-h"><span>脂肪</span><b id="pgFat">0g</b></div>
-            <div class="pg-m-bar"><i id="pgFatBar"></i></div>
-          </div>
-          <div class="pg-m carb">
-            <div class="pg-m-h"><span>碳水</span><b id="pgCarb">0g</b></div>
-            <div class="pg-m-bar"><i id="pgCarbBar"></i></div>
-          </div>
-        </div>
-      </div>
       <div class="steps" id="pgSteps"></div>
     </div>
     <div class="body">
@@ -189,31 +135,19 @@ body { font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif; color:v
       <div class="list" id="list"></div>
       <div class="foot">
         <div class="sum">合计<b id="total">¥0</b></div>
-        <button class="btn g" id="clear">清空餐盘</button>
+        <button class="btn g" id="clear">全部取消</button>
         <button class="btn y" id="pick">取餐</button>
-        <button class="btn g" id="checkout" hidden>结算</button>
       </div>
     </div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
-<div id="storeModal" role="dialog" aria-modal="true" aria-labelledby="smT" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;display:none;align-items:center;justify-content:center;padding:16px">
-  <div style="background:#fff;border-radius:16px;width:min(520px,100%);max-height:84vh;overflow:auto;padding:16px">
-    <h2 id="smT" style="font-size:18px;margin-bottom:4px">选一家长春门店</h2>
-    <p id="smHint" style="font-size:12px;color:#6f6b63;margin-bottom:8px">选好后，菜单和价格会换成这家店的真实数据。</p>
-    <div id="smList">加载中…</div>
-    <button class="btn g" id="smClose" style="margin-top:10px">先用离线演示菜单</button>
-  </div>
-</div>
 <script src="js/sprites.js"></script>
 <script src="js/data.js"></script>
 <script src="js/menu.js"></script>
-<script src="js/api.js"></script>
-<script src="js/orders.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/recipes.js"></script>
 <script src="js/render.js"></script>
-<script src="js/npc.js"></script>
 <script src="js/ui.js"></script>
 </body>
 </html>

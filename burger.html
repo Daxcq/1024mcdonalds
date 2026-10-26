@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M-CODE · 汉堡工坊</title>
+<link rel="stylesheet" href="css/fp.css">
+</head>
+<body>
+<div id="fp-root">
+
+  <!-- 大厅：选食谱 or 自由创作 -->
+  <section id="fp-hall" class="on">
+    <header class="fp-hall-head">
+      <div class="fp-logo">M<span>-CODE</span></div>
+      <div class="fp-hall-sub">
+        <h1>汉堡工坊</h1>
+        <p>戴好手套，按食谱做一个汉堡；也可以不看食谱，自己发明一个。</p>
+      </div>
+      <div class="fp-hall-actions">
+        <button class="fp-btn y" id="fp-free">自由创作</button>
+        <button class="fp-icon-btn" id="fp-sound" title="音效开关">♪</button>
+      </div>
+    </header>
+    <div class="fp-hall-bar"><span id="fp-stat">正在准备食材…</span><span>点一份食谱开始</span></div>
+    <ol class="fp-howto">
+      <li><b>①</b> 选一份食谱，或者在右上角点「自由创作」</li>
+      <li><b>②</b> 在下面的料架点配料，白手套会从后厨把料取来放到砧板上</li>
+      <li><b>③</b> 从下往上叠好、盖上面包，点「出餐」验收</li>
+    </ol>
+    <div class="fp-cards" id="fp-cards"></div>
+  </section>
+
+  <!-- 游戏 -->
+  <section id="fp-game">
+    <div id="fp-stage">
+      <canvas id="fp-cv"></canvas>
+      <div class="fp-hud">
+        <button class="fp-icon-btn" id="fp-home" title="回到大厅">‹ 大厅</button>
+        <span class="fp-chip" id="fp-count">空砧板</span>
+        <span class="fp-hint" id="fp-hint"></span>
+        <span class="fp-spacer"></span>
+        <button class="fp-icon-btn" id="fp-ticket-toggle" title="展开/收起食谱">食谱</button>
+        <button class="fp-icon-btn" id="fp-undo" title="撤销一层">撤销</button>
+        <button class="fp-icon-btn" id="fp-clear" title="清空砧板">清空</button>
+        <button class="fp-btn y sm" id="fp-serve">出餐</button>
+      </div>
+    </div>
+
+    <!-- 食谱小票 -->
+    <aside id="fp-ticket">
+      <button class="fp-ticket-close" id="fp-ticket-close" title="收起食谱">×</button>
+      <div class="fp-tk-head">M-CODE · ORDER</div>
+      <h3 id="fp-ticket-title">—</h3>
+      <p id="fp-ticket-blurb">—</p>
+      <div class="fp-tk-bar"><i id="fp-ticket-prog"></i></div>
+      <ol id="fp-ticket-rows"></ol>
+      <div class="fp-tk-meta" id="fp-ticket-meta"></div>
+      <div class="fp-tk-foot">从下往上叠 · 点料架取料</div>
+    </aside>
+
+    <!-- 料架 -->
+    <div class="fp-shelf" id="fp-shelf">
+      <nav id="fp-tabs"></nav>
+      <div id="fp-shelf-items"></div>
+    </div>
+  </section>
+
+  <!-- 结算小票 -->
+  <div id="fp-result"></div>
+  <div class="fp-toast" id="fp-toast"></div>
+</div>
+
+<script src="js/fp_sprites.js"></script>
+<script src="js/fp_layout.js"></script>
+<script src="js/fp_data.js"></script>
+<script src="js/fp_recipes.js"></script>
+<script src="js/fp_rules.js"></script>
+<script src="js/fp_sfx.js"></script>
+<script src="js/fp_scene.js"></script>
+<script src="js/fp_game.js"></script>
+<script src="js/fp_anim.js"></script>
+<script src="js/fp_transition.js"></script>
+<script src="js/fp_ui.js"></script>
+</body>
+</html>

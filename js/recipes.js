@@ -54,39 +54,17 @@
   R.burger = async function (A, o, def) {
     const E = A.E, L = MD.LAYER, bs = MD.ST.board.spot;
     const S = MD.stepsFor(def), nSt = S.labels.length;
-    const layNuts = MD.burgerLayersNutri ? MD.burgerLayersNutri(def) : [];
-    const addNutri = (idx, px, py) => {
-      const ln = layNuts[idx] || { kcal: 25, protein: 1, fat: 1, carb: 2, label: '配料' };
-      burger.kcal = (burger.kcal || 0) + ln.kcal;
-      burger.protein = (burger.protein || 0) + ln.protein;
-      burger.fat = (burger.fat || 0) + ln.fat;
-      burger.carb = (burger.carb || 0) + ln.carb;
-      if (o) {
-        o.liveNutri = {
-          kcal: burger.kcal,
-          protein: Math.round(burger.protein * 10) / 10,
-          fat: Math.round(burger.fat * 10) / 10,
-          carb: Math.round(burger.carb * 10) / 10,
-          lastDelta: ln.kcal,
-          lastLabel: ln.label,
-          stepSeq: idx + 1,
-        };
-      }
-      if (A.calPop) A.calPop(px, py, `+${ln.kcal} kcal · ${ln.label}`);
-      E.emit();
-    };
     A.stage(0);
     // 1. 下层面包 -> 案板
     let bun = await grab(A, 'bun', spr('bun_bottom', L.bun_bottom.w), '取下层面包');
     A.say('放到案板上');
     await A.walk('board');
-    const burger = A.spawn({ type: 'burger', x: bs[0], y: bs[1], w: 76, scale: 1, alpha: 1, layers: [], cum: 0, kcal: 0, hidden: true });
+    const burger = A.spawn({ type: 'burger', x: bs[0], y: bs[1], w: 76, scale: 1, alpha: 1, layers: [], cum: 0, hidden: true });
     o.main = burger; o.where = 'board';
     let f;
     await A.reach([bs[0], bs[1] - 10], 520, () => { f = A.fly(bun, [bs[0], bs[1]], 260, 26); A.release(bun); });
     await f; A.remove(bun);
     burger.hidden = false; burger.layers.push({ key: 'bun_bottom' }); burger.cum += L.bun_bottom.dy;
-    addNutri(0, bs[0], bs[1] - burger.cum - 18);
     A.puff(bs[0], bs[1] - 8, '#ffe9b8', 4, { speed: 24, life: 300 });
     await A.wait(150);
 
@@ -119,7 +97,6 @@
         await A.anim(420, (k) => { bottle.rot = -0.9 * Math.sin(k * Math.PI); bottle.x = top[0] + 4 + 6 * Math.sin(k * 6) * 0.2; });
         A.fxRm(fxh);
         burger.layers.push({ key: I.key }); burger.cum += lay.dy;
-        addNutri(ii + 1, bs[0], bs[1] - burger.cum - 18);
         await A.wait(80);
         A.remove(bottle);
       } else {
@@ -130,8 +107,8 @@
         await A.reach(top, 480, () => { A.release(take); f = A.fly(take, [top[0], top[1] + 8], 220, 24); });
         await f; A.remove(take);
       }
-      if (ing === 'beef' || ing === 'chicken') { burger.layers.push({ key: I.key }); burger.cum += lay.dy; addNutri(ii + 1, bs[0], bs[1] - burger.cum - 18); }
-      else if (!(ing === 'ketchup' || ing === 'mayo')) { burger.layers.push({ key: I.key }); burger.cum += lay.dy; addNutri(ii + 1, bs[0], bs[1] - burger.cum - 18); }
+      if (ing === 'beef' || ing === 'chicken') { burger.layers.push({ key: I.key }); burger.cum += lay.dy; }
+      else if (!(ing === 'ketchup' || ing === 'mayo')) { burger.layers.push({ key: I.key }); burger.cum += lay.dy; }
       A.puff(bs[0], bs[1] - burger.cum, '#ffffff', 3, { speed: 18, life: 250, g: 0 });
       await A.wait(90);
     }
@@ -145,7 +122,6 @@
     await A.reach(top, 520, () => { A.release(tb); f = A.fly(tb, [top[0], top[1] + 10], 240, 28); });
     await f; A.remove(tb);
     burger.layers.push({ key: 'bun_top' });
-    addNutri(def.ing.length + 1, top[0], top[1] - 14);
     A.puff(top[0], top[1], '#ffe9b8', 6, { speed: 30, life: 350 });
     await A.wait(250);
 
@@ -189,7 +165,6 @@
     await A.wait(160);
 
     // 接饮料：出料口的液柱 + 杯里的液面上升
-    const tot = o.totalNutri || (MD.itemNutrition ? MD.itemNutrition(def) : { kcal: 120, protein: 0, fat: 0, carb: 28 });
     A.stage(1);
     A.say(def.id === 'hot_coffee' ? '接热咖啡' : '接饮料');
     const col = def.color;
@@ -200,12 +175,10 @@
     });
     await A.anim(2300, (k) => {
       cup.level = k; cup.dx = Math.sin(k * 90) * 0.6;
-      o.liveNutri = { kcal: Math.round(tot.kcal * k), protein: Math.round(tot.protein * k * 10) / 10, fat: Math.round(tot.fat * k * 10) / 10, carb: Math.round(tot.carb * k * 10) / 10, lastDelta: tot.kcal, lastLabel: def.name, stepSeq: 1 };
       if (Math.random() < 0.25) A.puff(cup.x, cup.y - 36 * k - 8, col, 1, { speed: 14, g: 120, life: 260, size: 2 });
     }, EASE.lin);
     cup.dx = 0;
     A.fxRm(stream);
-    if (A.calPop) A.calPop(cup.x, cup.y - 48, `+${tot.kcal} kcal · ${def.name}`);
     A.puff(cup.x, cup.y - 40, col, 5, { speed: 20, life: 300, g: 60 });
     await A.wait(150);
     A.stage(2);
@@ -248,8 +221,6 @@
     await A.anim(500, (k) => { lift = k * 14; });
     A.puff(bk[0], bk[1] - 10, '#fff', 6, { speed: 24, up: -30, g: -20, life: 600 });
     // 装盒：三铲
-    const tot = o.totalNutri || (MD.itemNutrition ? MD.itemNutrition(def) : { kcal: 280, protein: 4, fat: 14, carb: 32 });
-    const scoopKcal = Math.round(tot.kcal / 3);
     A.stage(2);
     A.say('铲起装盒');
     for (let i = 1; i <= 3; i++) {
@@ -260,10 +231,6 @@
       await A.fly(p, target, 260, 26);
       A.remove(p);
       box.level = i / 3;
-      const curKcal = i === 3 ? tot.kcal : scoopKcal * i;
-      o.liveNutri = { kcal: curKcal, protein: Math.round(tot.protein * (i / 3) * 10) / 10, fat: Math.round(tot.fat * (i / 3) * 10) / 10, carb: Math.round(tot.carb * (i / 3) * 10) / 10, lastDelta: i === 3 ? tot.kcal - scoopKcal * 2 : scoopKcal, lastLabel: `第${i}铲`, stepSeq: i };
-      if (A.calPop) A.calPop(box.x, box.y - 28, `+${o.liveNutri.lastDelta} kcal`);
-      E.emit();
       A.puff(box.x, box.y - 20, '#ffd45e', 3, { speed: 24, life: 260 });
     }
     // 撒盐
@@ -298,20 +265,15 @@
     let f;
     await A.reach([is[0], is[1] - 10], 460, () => { A.release(cup); f = A.fly(cup, [is[0], is[1]], 240, 20); });
     await f;
-    const tot = o.totalNutri || (MD.itemNutrition ? MD.itemNutrition(def) : { kcal: 220, protein: 4, fat: 7, carb: 34 });
     A.stage(1);
     A.say('挤冰淇淋');
     const nz = [is[0], is[1] - 62];
     const stream = A.fxAdd((c) => {
       c.fillStyle = '#fffdf2'; c.fillRect(nz[0] - 3, nz[1], 6, Math.max(0, cup.y - 40 * cup.level - nz[1]));
     });
-    await A.anim(2000, (k) => {
-      cup.level = k; cup.dx = Math.sin(k * 60) * 0.5;
-      o.liveNutri = { kcal: Math.round(tot.kcal * k), protein: Math.round(tot.protein * k * 10) / 10, fat: Math.round(tot.fat * k * 10) / 10, carb: Math.round(tot.carb * k * 10) / 10, lastDelta: tot.kcal, lastLabel: def.name, stepSeq: 1 };
-    }, EASE.lin);
+    await A.anim(2000, (k) => { cup.level = k; cup.dx = Math.sin(k * 60) * 0.5; }, EASE.lin);
     cup.dx = 0;
     A.fxRm(stream);
-    if (A.calPop) A.calPop(cup.x, cup.y - 44, `+${tot.kcal} kcal · ${def.name}`);
     if (def.style === 'flurry') {
       A.stage(2);
       A.say('搅拌麦旋风');

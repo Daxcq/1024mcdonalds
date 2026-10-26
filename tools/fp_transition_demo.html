@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M-CODE 小票转场 · 演示</title>
+<style>
+  :root { --red:#da291c; --yellow:#ffbc0d; --ink:#27251f; --cream:#faf7f0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { font-family: "Microsoft YaHei","PingFang SC","Noto Sans CJK SC",system-ui,sans-serif; color: var(--ink); background: var(--cream); overflow: hidden; }
+  /* 底下的“场景”：转场结束后能看到它，用来确认溶解效果 */
+  #scene { position: absolute; inset: 0; display: grid; place-items: center; text-align: center;
+    background: repeating-linear-gradient(135deg, #ffe9b8 0 36px, #ffd36b 36px 72px); transition: background .2s; }
+  #scene.b { background: repeating-linear-gradient(135deg, #cfe8ff 0 36px, #9ccaf5 36px 72px); }
+  #scene h1 { font-size: clamp(28px, 5vw, 60px); color: var(--red); text-shadow: 3px 3px 0 #fff; }
+  #scene p { margin-top: 10px; font-size: clamp(14px, 2vw, 22px); }
+  #bar { position: fixed; left: 12px; bottom: 12px; display: flex; gap: 10px; align-items: center; z-index: 5;
+    background: rgba(30,18,10,.8); color: #ffe9b8; padding: 8px 12px; border-radius: 10px; font-size: 13px; }
+  #bar button { border: 0; background: var(--yellow); color: var(--ink); font-weight: 700; border-radius: 6px; padding: 5px 12px; cursor: pointer; }
+  #log { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div id="scene"><div><h1 id="sceneName">场景 A</h1><p>转场结束后应该看到这里（盖住时会被切成 B / A）</p></div></div>
+<div id="bar"><button id="replay" type="button">重播转场</button><span id="log">待命</span></div>
+<script src="../js/fp_transition.js"></script>
+<script>
+(function () {
+  const FP = window.FP;
+  FP.transition.assetBase = '../assets/fp/burger/';
+  const q = new URLSearchParams(location.search);
+  const log = document.getElementById('log'), scene = document.getElementById('scene'), name = document.getElementById('sceneName');
+  window.DEMO = { covers: 0, resolved: 0, last: null, t0: 0 };
+  function run() {
+    const D = window.DEMO, t0 = performance.now();
+    D.t0 = t0; log.textContent = '播放中…';
+    const p = FP.transition.play({
+      duration: +q.get('d') || 2800,
+      onCover() {
+        D.covers++; D.coverAt = Math.round(performance.now() - t0);
+        const b = scene.classList.toggle('b'); name.textContent = b ? '场景 B' : '场景 A';
+      },
+    });
+    D.last = p;
+    p.then(() => { D.resolved++; D.doneAt = Math.round(performance.now() - t0); log.textContent = '完成 · cover@' + D.coverAt + 'ms · done@' + D.doneAt + 'ms'; });
+    return p;
+  }
+  window.DEMO.run = run;
+  document.getElementById('replay').addEventListener('click', run);
+  if (q.get('auto') === '1') run();
+})();
+</script>
+</body>
+</html>

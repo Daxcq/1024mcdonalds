@@ -76,18 +76,6 @@
       }
       cum += d.dy;
     }
-    if (p.kcal > 0) {
-      const txt = `${p.kcal} kcal`;
-      c.font = 'bold 13px "Microsoft YaHei", sans-serif';
-      c.textAlign = 'center';
-      const tw = c.measureText(txt).width + 16, ty = -cum - 34;
-      c.fillStyle = 'rgba(42,22,12,0.84)';
-      c.strokeStyle = '#ffbc0d';
-      c.lineWidth = 1.5;
-      c.beginPath(); c.roundRect(-tw / 2, ty - 14, tw, 20, 10); c.fill(); c.stroke();
-      c.fillStyle = '#ffe28a';
-      c.fillText(txt, 0, ty);
-    }
     c.restore();
   }
 
@@ -151,33 +139,13 @@
     c.restore();
   }
 
-  /* ---------- 出餐台标签 / 步骤字幕 / 热量飘字 ---------- */
-  function drawCalPops(c, E) {
-    if (!E.calPops || !E.calPops.length) return;
-    c.save();
-    c.font = 'bold 15px "Microsoft YaHei", sans-serif';
-    c.textAlign = 'center';
-    for (const b of E.calPops) {
-      const a = Math.max(0, Math.min(1, b.life / (b.max * 0.45)));
-      c.globalAlpha = a;
-      const w = c.measureText(b.text).width + 20;
-      c.fillStyle = 'rgba(40, 20, 10, 0.88)';
-      c.strokeStyle = '#ffbc0d';
-      c.lineWidth = 1.8;
-      c.beginPath(); c.roundRect(b.x - w / 2, b.y - 16, w, 24, 12); c.fill(); c.stroke();
-      c.fillStyle = '#ffd86b';
-      c.fillText(b.text, b.x, b.y + 1);
-    }
-    c.restore();
-  }
-
+  /* ---------- 出餐台标签 / 步骤字幕 ---------- */
   function caption(c, E) {
     const o = E.cur; if (!o || !o.step) return;
-    const kcal = o.liveNutri && o.liveNutri.kcal > 0 ? `  ·  🔥 ${o.liveNutri.kcal} kcal` : '';
-    const s = o.step + kcal; c.save();
-    c.font = 'bold 21px "Microsoft YaHei", sans-serif'; c.textAlign = 'center';
+    const s = o.step; c.save();
+    c.font = 'bold 22px "Microsoft YaHei", sans-serif'; c.textAlign = 'center';
     const w = c.measureText(s).width + 36;
-    c.fillStyle = 'rgba(40,20,10,0.76)'; c.beginPath(); c.roundRect(446 - w / 2, 990, w, 38, 19); c.fill();
+    c.fillStyle = 'rgba(40,20,10,0.72)'; c.beginPath(); c.roundRect(446 - w / 2, 990, w, 38, 19); c.fill();
     c.fillStyle = '#ffe08a'; c.fillText(s, 446, 1016); c.restore();
   }
 
@@ -197,7 +165,6 @@
       c.fillStyle = q.color; c.fillRect(Math.round(q.x), Math.round(q.y), q.size, q.size);
     }
     c.globalAlpha = 1;
-    drawCalPops(c, E);
     bubble(c, E);
     caption(c, E);
   };
